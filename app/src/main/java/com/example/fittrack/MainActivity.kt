@@ -96,8 +96,8 @@ class MainActivity : ComponentActivity() {
                                 dao = dao
                             )
                         }
-                        composable("social") {
-                            SocialFeedScreen(navController)
+                        composable("notes") {
+                            NotesScreen(navController)
                         }
                         composable("map") {
                             MapPage(navController)

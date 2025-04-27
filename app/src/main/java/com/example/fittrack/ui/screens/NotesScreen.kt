@@ -17,7 +17,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.fittrack.api.ApiClient
-import com.example.fittrack.entity.SocialPostEntity
+import com.example.fittrack.entity.NoteEntity
 import com.example.fittrack.ui.ui_elements.NavBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -26,8 +26,8 @@ import java.util.*
 
 //APP LISTA DE ECOTANCTOS
 @Composable
-fun SocialFeedScreen(navController: NavController) {
-    var posts by remember { mutableStateOf<List<SocialPostEntity>>(emptyList()) }
+fun NotesScreen(navController: NavController) {
+    var posts by remember { mutableStateOf<List<NoteEntity>>(emptyList()) }
     LaunchedEffect(Unit) {
         posts = withContext(Dispatchers.IO) {
             ApiClient.getPosts()
@@ -55,7 +55,7 @@ fun SocialFeedScreen(navController: NavController) {
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(posts) { post ->
-                    SocialPostCard(post)
+                    NoteCard(post)
                 }
             }
 
@@ -64,7 +64,7 @@ fun SocialFeedScreen(navController: NavController) {
 }
 
 @Composable
-fun SocialPostCard(post: SocialPostEntity) {
+fun NoteCard(post: NoteEntity) {
     val context = LocalContext.current
     val dateFormat = SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault())
     val formattedDate = dateFormat.format(Date(post.timestamp))
@@ -83,10 +83,9 @@ fun SocialPostCard(post: SocialPostEntity) {
             ) {
                 AsyncImage(
                     model = ImageRequest.Builder(context)
-                        .data(post.userAvatarUrl)
                         .crossfade(true)
                         .build(),
-                    contentDescription = "Avatar de ${post.userName}",
+                    contentDescription = "Avatar de ${post.header}",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(48.dp)
@@ -97,7 +96,7 @@ fun SocialPostCard(post: SocialPostEntity) {
 
                 Column {
                     Text(
-                        text = post.userName,
+                        text = post.header,
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
@@ -114,21 +113,6 @@ fun SocialPostCard(post: SocialPostEntity) {
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            post.postImageUrl?.let { imageUrl ->
-                Spacer(modifier = Modifier.height(12.dp))
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(imageUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = "Imagen de publicación",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .height(180.dp)
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                )
-            }
         }
     }
 }

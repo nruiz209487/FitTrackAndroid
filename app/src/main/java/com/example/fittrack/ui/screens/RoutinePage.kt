@@ -61,6 +61,7 @@ fun RoutinePage(
         ) {
             Text("No hay ejercicios para esta rutina.")
         }
+        return
     }
 
     val current = exercises[currentIndex]

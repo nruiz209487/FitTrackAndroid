@@ -2,7 +2,7 @@ package com.example.fittrack.api
 
 import com.example.fittrack.entity.RoutineEntity
 import com.example.fittrack.entity.ExerciseEntity
-import com.example.fittrack.entity.SocialPostEntity
+import com.example.fittrack.entity.NoteEntity
 import com.example.fittrack.entity.UserEntity
 
 object ApiClient : ApiRoutes {
@@ -97,30 +97,24 @@ object ApiClient : ApiRoutes {
         )
     }
 
-    override suspend fun getPosts(): List<SocialPostEntity> {
+    override suspend fun getPosts(): List<NoteEntity> {
         return listOf(
-            SocialPostEntity(
+            NoteEntity(
                 id = 1,
-                userName = "Lucas Trainer",
-                userAvatarUrl = "https://i.pravatar.cc/150?img=3",
+                header = "Lucas Trainer",
                 postText = "¡Entrenamiento completado! 💪 Hoy superé mis marcas en press de banca.",
-                postImageUrl = "https://prodd8.planetfitness.com/sites/default/files/feature-image/pf-getting-started.jpg",
                 timestamp = System.currentTimeMillis()
             ),
-            SocialPostEntity(
+            NoteEntity(
                 id = 2,
-                userName = "Ana FitGirl",
-                userAvatarUrl = "https://i.pravatar.cc/150?img=5",
+                header = "Ana FitGirl",
                 postText = "Amo mis rutinas de pierna 🔥 ¿Quién más entrena duro los lunes?",
-                postImageUrl = "https://okdiario.com/img/vida-sana/2015/11/gym22.jpg",
                 timestamp = System.currentTimeMillis() - 3600000
             ),
-            SocialPostEntity(
+            NoteEntity(
                 id = 3,
-                userName = "Carlos Pro",
-                userAvatarUrl = "https://i.pravatar.cc/150?img=10",
+                header = "Carlos Pro",
                 postText = "Sin excusas. 5 AM y en el gym 💯.",
-                postImageUrl = "https://www.entrenamiento.com/wp-content/uploads/2018/08/estimular-hipertrofia.jpg",
                 timestamp = System.currentTimeMillis() - 7200000
             )
         )

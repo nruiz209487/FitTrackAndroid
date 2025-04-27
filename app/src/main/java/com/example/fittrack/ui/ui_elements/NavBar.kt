@@ -34,13 +34,13 @@ sealed class NavItem(
     object Home : NavItem("home", R.string.home, Icons.Filled.Home)
     object Profile : NavItem("profile", R.string.profile, Icons.Filled.Person)
     object ExerciseList : NavItem("exercise_list", R.string.exercise_list, Icons.Filled.Menu)
-    object Social : NavItem("social", R.string.social, Icons.Filled.Call)
+    object Notes : NavItem("notes", R.string.notes, Icons.Filled.Call)
 }
 
 
 @Composable
 fun NavBar(navController: NavController) {
-    val items = listOf(NavItem.Home, NavItem.ExerciseList, NavItem.Profile, NavItem.Social)
+    val items = listOf(NavItem.Home, NavItem.ExerciseList, NavItem.Profile, NavItem.Notes)
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
