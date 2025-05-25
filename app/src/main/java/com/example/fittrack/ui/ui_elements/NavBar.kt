@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
@@ -32,9 +32,9 @@ sealed class NavItem(
     val icon: ImageVector
 ) {
     object Home : NavItem("home", R.string.home, Icons.Filled.Home)
-    object Profile : NavItem("profile", R.string.profile, Icons.Filled.Person)
     object ExerciseList : NavItem("exercise_list", R.string.exercise_list, Icons.Filled.Menu)
-    object Notes : NavItem("notes", R.string.notes, Icons.Filled.Call)
+    object Notes : NavItem("notes", R.string.notes, Icons.Filled.Book)
+    object Profile : NavItem("profile", R.string.profile, Icons.Filled.Person)
 }
 
 

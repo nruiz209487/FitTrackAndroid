@@ -1,172 +1,112 @@
 package com.example.fittrack.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.fittrack.api.ApiClient
+import com.example.fittrack.entity.UserEntity
 
-//Ejecicio examen IMC
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDataScreen(navController: NavController) {
+    var user by remember { mutableStateOf<UserEntity?>(null) }
+    var editedName by remember { mutableStateOf("") }
+    var editedEmail by remember { mutableStateOf("") }
+    var editedProfileImage by remember { mutableStateOf("") }
+    val apiService = remember { ApiClient }
 
-    var gender by remember { mutableStateOf("") }
-    var height by remember { mutableStateOf("") }
-    var weight by remember { mutableStateOf("") }
-    var bmi by remember { mutableDoubleStateOf(0.0) }
-    var result by remember { mutableStateOf("") }
-
-    Column(
-        Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-
-        Text(
-            text = "Usuario",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Button(
-                onClick = { gender = "Hombre" },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (gender == "Hombre") Color(0xFF1976D2) else Color.LightGray,
-                    contentColor = if (gender == "Hombre") Color.White else Color.Black
-                ),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 8.dp)
-            ) {
-                Text("Hombre")
-            }
-
-            Button(
-                onClick = { gender = "Mujer" },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (gender == "Mujer") Color(0xFFD81B60) else Color.LightGray,
-                    contentColor = if (gender == "Mujer") Color.White else Color.Black
-                ),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 8.dp)
-            ) {
-                Text("Mujer")
-            }
+    // Cargar datos del usuario al iniciar
+    LaunchedEffect(Unit) {
+        user = apiService.getUser()
+        user?.let {
+            editedName = it.name ?: ""
+            editedEmail = it.email
+            editedProfileImage = it.profileImage ?: ""
         }
+    }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = height,
-            onValueChange = { input ->
-                if (input.matches(Regex("^\\d{0,3}(\\.\\d{0,2})?$"))) {
-                    height = input
-                }
-            },
-            label = { Text("Altura en metros (Ej: 1.75)") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = weight,
-            onValueChange = { input ->
-                if (input.matches(Regex("^\\d{0,3}(\\.\\d{0,2})?$"))) {
-                    weight = input
-                }
-            },
-            label = { Text("Peso en kg (Ej: 70)") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        OutlinedTextField(
-            value = weight,
-            onValueChange = { input ->
-                if (input.matches(Regex("^\\d{0,3}(\\.\\d{0,2})?$"))) {
-                    weight = input
-                }
-            },
-            label = { Text("Nombre en fitness") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        OutlinedTextField(
-            value = weight,
-            onValueChange = { input ->
-                if (input.matches(Regex("^\\d{0,3}(\\.\\d{0,2})?$"))) {
-                    weight = input
-                }
-            },
-            label = { Text("Objetivo fitness") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-
-
-        Button(
-            onClick = {
-                val h = height.toDoubleOrNull() ?: 0.0
-                val w = weight.toDoubleOrNull() ?: 0.0
-                val coef = if (gender.lowercase() == "hombre") 1.0 else 0.95
-
-                if (h > 0 && w > 0 && gender.isNotEmpty()) {
-                    bmi = (w / (h * h)) * coef
-                    result = when {
-                        bmi < 18.5 -> "Bajo peso"
-                        bmi in 18.5..24.9 -> "Peso normal"
-                        bmi in 25.0..29.9 -> "Sobrepeso"
-                        else -> "Obesidad"
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Editar perfil") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
-                } else {
-                    result = "Por favor, completa todos los campos correctamente."
                 }
-            },
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = "Calcular IMC")
+            )
         }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        if (bmi > 0.0) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFE0E0E0), RoundedCornerShape(12.dp))
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = "Tu IMC es: ${"%.2f".format(bmi)}\nEstado: $result",
-                    style = MaterialTheme.typography.bodyLarge
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            if (user == null) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else {
+                // Campo para el nombre
+                OutlinedTextField(
+                    value = editedName,
+                    onValueChange = { editedName = it },
+                    label = { Text("Nombre") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
+
+                // Campo para el email
+                OutlinedTextField(
+                    value = editedEmail,
+                    onValueChange = { editedEmail = it },
+                    label = { Text("Email") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                )
+
+                // Campo para la imagen de perfil
+                OutlinedTextField(
+                    value = editedProfileImage,
+                    onValueChange = { editedProfileImage = it },
+                    label = { Text("URL de imagen de perfil") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                // Botón de guardar
+                Button(
+                    onClick = {
+                        // Aquí iría la llamada a la API para actualizar
+                        val updatedUser = user!!.copy(
+                            name = editedName,
+                            email = editedEmail,
+                            profileImage = editedProfileImage
+                        )
+                        // Llamar a tu función de actualización aquí
+                        // apiService.updateUser(updatedUser)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Guardar cambios")
+                }
             }
         }
     }

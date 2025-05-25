@@ -22,7 +22,6 @@ import com.example.fittrack.entity.ExerciseEntity
 import com.example.fittrack.ui.ui_elements.NavBar
 
 
-//Lista de contactos
 @Composable
 fun ExerciseListPage(
     navController: NavController
@@ -33,8 +32,7 @@ fun ExerciseListPage(
     }
 
     Scaffold(
-        bottomBar = { NavBar(navController = navController) }
-    ) { innerPadding ->
+        bottomBar = { NavBar(navController = navController) }) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -51,10 +49,11 @@ fun ExerciseListPage(
             } else {
                 Column(modifier = Modifier.fillMaxSize()) {
                     Text(
-                        text = "Elige un ejercicio",
-                        style = MaterialTheme.typography.headlineSmall
+                        text = "Elige un ejercicio", style = MaterialTheme.typography.headlineSmall
                     )
+
                     Spacer(Modifier.height(16.dp))
+
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
                         contentPadding = PaddingValues(8.dp),
@@ -68,15 +67,12 @@ fun ExerciseListPage(
                                     .fillMaxWidth()
                                     .clickable {
                                         navController.navigate("exercise_logs/${exercise.id}")
-                                    },
-                                shape = RoundedCornerShape(12.dp)
+                                    }, shape = RoundedCornerShape(12.dp)
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     AsyncImage(
                                         model = ImageRequest.Builder(LocalContext.current)
-                                            .data(exercise.imageUri)
-                                            .crossfade(true)
-                                            .build(),
+                                            .data(exercise.imageUri).crossfade(true).build(),
                                         contentDescription = exercise.name,
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier

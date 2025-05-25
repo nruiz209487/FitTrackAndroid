@@ -34,7 +34,6 @@ import com.example.fittrack.api.ApiClient
 import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.ui.ui_elements.NavBar
 
-//Ejercicio lista Perfil de usuario
 @Composable
 fun ProfileScreen(navController: NavController) {
     var user by remember { mutableStateOf<UserEntity?>(null) }
@@ -45,8 +44,7 @@ fun ProfileScreen(navController: NavController) {
     }
 
     Scaffold(
-        bottomBar = { NavBar(navController = navController) }
-    ) { innerPadding ->
+        bottomBar = { NavBar(navController = navController) }) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -69,19 +67,15 @@ fun ProfileScreen(navController: NavController) {
 @Composable
 private fun ProfileHeader(user: UserEntity) {
     Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
+        shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        elevation = CardDefaults.cardElevation(4.dp)
+        ), elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(10.dp)
+            horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(10.dp)
         ) {
             ProfileImage(
-                imageUrl = user.profileImage ?: "iamgenBasica.jpg",
-                modifier = Modifier.size(120.dp)
+                imageUrl = user.profileImage ?: "iamgenBasica.jpg", modifier = Modifier.size(120.dp)
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -96,8 +90,7 @@ private fun ProfileHeader(user: UserEntity) {
             Spacer(modifier = Modifier.height(8.dp))
 
             FilledTonalButton(
-                onClick = { /* Actualizar foto */ },
-                shape = RoundedCornerShape(10.dp)
+                onClick = { /* Actualizar foto */ }, shape = RoundedCornerShape(10.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.AccountCircle,
@@ -115,15 +108,10 @@ private fun ProfileHeader(user: UserEntity) {
 private fun ProfileImage(imageUrl: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Surface(
-        shape = CircleShape,
-        tonalElevation = 4.dp,
-        modifier = modifier
+        shape = CircleShape, tonalElevation = 4.dp, modifier = modifier
     ) {
         AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(imageUrl)
-                .crossfade(true)
-                .build(),
+            model = ImageRequest.Builder(context).data(imageUrl).crossfade(true).build(),
             contentDescription = "Imagen de perfil",
             contentScale = ContentScale.Crop,
             modifier = Modifier.clip(CircleShape)
@@ -134,10 +122,6 @@ private fun ProfileImage(imageUrl: String, modifier: Modifier = Modifier) {
 @Composable
 private fun UserMetricsSection(user: UserEntity) {
     val metrics = listOf(
-        "Peso: ${user.weight} kg" to Icons.Default.Face,
-        "Altura: ${user.height} m" to Icons.Default.Face,
-        "Edad: ${user.age} años" to Icons.Default.Face,
-        "Objetivo: ${user.goal}" to Icons.Default.Check,
         "Racha: ${user.streakDays} días" to Icons.Default.DateRange
     )
     metrics.forEach { (text, icon) ->
@@ -150,8 +134,7 @@ private fun UserMetricsSection(user: UserEntity) {
             )
         ) {
             Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = icon,
@@ -172,8 +155,7 @@ private fun UserMetricsSection(user: UserEntity) {
 @Composable
 private fun ActionButtonsSection(navController: NavController) {
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
     ) {
         FilledTonalButton(
             onClick = { navController.navigate("user_data") },
@@ -191,8 +173,7 @@ private fun ActionButtonsSection(navController: NavController) {
         Spacer(modifier = Modifier.height(10.dp))
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
         ) {
             FilledTonalButton(
                 onClick = { navController.navigate("settings") },

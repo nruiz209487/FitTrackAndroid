@@ -2,10 +2,48 @@ package com.example.fittrack.api
 
 import com.example.fittrack.entity.RoutineEntity
 import com.example.fittrack.entity.ExerciseEntity
+import com.example.fittrack.entity.ExerciseLogEntity
 import com.example.fittrack.entity.NoteEntity
 import com.example.fittrack.entity.UserEntity
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import kotlin.collections.listOf
+
 
 object ApiClient : ApiRoutes {
+    private const val BASE_URL = "http://10.0.2.2:8000/api/"
+
+    val retrofitService: ApiService by lazy {
+        getRetrofit().create(ApiService::class.java)
+    }
+
+    private fun getRetrofit(): Retrofit {
+        val logging = HttpLoggingInterceptor()
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+        val httpClient = OkHttpClient.Builder()
+        httpClient.addInterceptor(logging)
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(httpClient.build())
+            .build()
+    }
+
+//    override suspend fun getExercises(): List<ExerciseEntity> {
+//        val response = retrofitService.getExercises()
+//        return if (response.isSuccessful) {
+//            response.body() ?: emptyList()
+//        } else {
+//            emptyList()
+//        }
+//    }
+//
+//
+
+
+
     override suspend fun getExercises(): List<ExerciseEntity> {
         return listOf(
             ExerciseEntity(
@@ -97,41 +135,33 @@ object ApiClient : ApiRoutes {
         )
     }
 
-    override suspend fun getPosts(): List<NoteEntity> {
-        return listOf(
-            NoteEntity(
-                id = 1,
-                header = "Lucas Trainer",
-                postText = "¡Entrenamiento completado! 💪 Hoy superé mis marcas en press de banca.",
-                timestamp = System.currentTimeMillis()
-            ),
-            NoteEntity(
-                id = 2,
-                header = "Ana FitGirl",
-                postText = "Amo mis rutinas de pierna 🔥 ¿Quién más entrena duro los lunes?",
-                timestamp = System.currentTimeMillis() - 3600000
-            ),
-            NoteEntity(
-                id = 3,
-                header = "Carlos Pro",
-                postText = "Sin excusas. 5 AM y en el gym 💯.",
-                timestamp = System.currentTimeMillis() - 7200000
-            )
-        )
-    }
 
     override suspend fun getUser(): UserEntity {
-        // Devuelve un UserEntity de ejemplo
         return UserEntity(
             id = 1,
             name = "Lucas Trainer",
             email = "lucas@example.com",
-            weight = 75.5f,
-            height = 1.80f,
-            age = 28,
-            goal = "Ganar masa muscular",
             streakDays = 5,
             profileImage = "https://i.pravatar.cc/300?img=3"
         )
     }
+
+    override suspend fun getNotes(): List<NoteEntity> {
+        return listOf(
+            NoteEntity(header = "Nota 1", text = "Texto de prueba 1", timestamp = "2025-05-25"),
+            NoteEntity(header = "Nota 2", text = "Texto de prueba 2", timestamp = "2025-05-24")
+        )
+    }
+
+    override suspend fun getExerciseLogs(): List<ExerciseLogEntity> {
+        val sampleExerciseId = 1
+        return listOf(
+            ExerciseLogEntity(0, sampleExerciseId, "2025-04-18", 60f, 10),
+            ExerciseLogEntity(0, sampleExerciseId, "2025-04-20", 62.5f, 8),
+            ExerciseLogEntity(0, sampleExerciseId, "2025-04-25", 65f, 7)
+        )
+    }
+
+
+
 }

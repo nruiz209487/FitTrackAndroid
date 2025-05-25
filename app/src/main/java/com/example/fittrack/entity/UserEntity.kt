@@ -12,14 +12,9 @@ import androidx.room.PrimaryKey
 data class UserEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val gender: String? = null,
     val name: String? = null,
     @ColumnInfo(name = "email")
     val email: String,
-    val weight: Float? = null,
-    val height: Float? = null,
-    val age: Int? = null,
-    val goal: String? = null,
     @ColumnInfo(name = "streak_days")
     val streakDays: Int? = null,
     @ColumnInfo(name = "profile_image")

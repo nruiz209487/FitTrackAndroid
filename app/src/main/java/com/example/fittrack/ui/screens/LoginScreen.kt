@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 
-//Multiples ejercicios de login
 @Composable
 fun LoginScreen(navController: NavController) {
     val context = LocalContext.current
@@ -32,8 +31,7 @@ fun LoginScreen(navController: NavController) {
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.surface
+        modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier
@@ -118,9 +116,20 @@ fun LoginScreen(navController: NavController) {
                         auth.signInWithEmailAndPassword(mail, password)
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
-                                    navController.navigate("profile")
-                                    Toast.makeText(context, "Sesión iniciada", Toast.LENGTH_SHORT)
-                                        .show()
+                                    val user = auth.currentUser
+                                    if (user != null && user.isEmailVerified) {
+                                        navController.navigate("profile")
+                                        Toast.makeText(
+                                            context, "Sesión iniciada", Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "Por favor verifica tu correo electrónico antes de iniciar sesión.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        auth.signOut()
+                                    }
                                 } else {
                                     Toast.makeText(
                                         context,
@@ -134,12 +143,10 @@ fun LoginScreen(navController: NavController) {
                         Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT)
                             .show()
                     }
-                },
-                colors = ButtonDefaults.buttonColors(
+                }, colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
-                modifier = Modifier.fillMaxWidth()
+                ), modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = "Iniciar Sesión")
             }
@@ -158,9 +165,7 @@ fun LoginScreen(navController: NavController) {
                     } else {
                         if (password != confirmPassword) {
                             Toast.makeText(
-                                context,
-                                "Las contraseñas no coinciden",
-                                Toast.LENGTH_SHORT
+                                context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT
                             ).show()
                             return@Button
                         }
@@ -168,28 +173,38 @@ fun LoginScreen(navController: NavController) {
                         auth.createUserWithEmailAndPassword(mail, password)
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
-                                    navController.navigate("profile")
-                                    Toast.makeText(
-                                        context,
-                                        "Cuenta creada exitosamente",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    val user = auth.currentUser
+                                    user?.sendEmailVerification()
+                                        ?.addOnCompleteListener { verifyTask ->
+                                            if (verifyTask.isSuccessful) {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Cuenta creada. Verifica tu correo electrónico antes de iniciar sesión.",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Error al enviar verificación: ${verifyTask.exception?.message}",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            }
+                                        }
+                                    auth.signOut()
                                 } else {
                                     Toast.makeText(
                                         context,
-                                         "Error: ${task.exception?.message}",
+                                        "Error: ${task.exception?.message}",
                                         Toast.LENGTH_LONG
                                     ).show()
                                     Log.e("Register", "Error al crear la cuenta", task.exception)
                                 }
                             }
                     }
-                },
-                colors = ButtonDefaults.buttonColors(
+                }, colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                ),
-                modifier = Modifier.fillMaxWidth()
+                ), modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = if (showConfirmPassword) "Confirmar Registro" else "Crear Nueva Cuenta")
             }

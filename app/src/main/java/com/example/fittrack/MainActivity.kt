@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
+import com.example.fittrack.api.ApiClient
 import com.example.fittrack.database.TrackFitDatabase
 import com.example.fittrack.entity.ExerciseLogEntity
 import com.example.fittrack.ui.screens.*
@@ -36,9 +37,10 @@ class MainActivity : ComponentActivity() {
         )
             .fallbackToDestructiveMigration(false)
             .build()
-
         lifecycleScope.launch {
-            insertSampleLogs()
+            insertLogsFromApi()
+            insertNotesFromApi()
+            inserRoutinesFromApi()
         }
 
         enableEdgeToEdge()
@@ -70,7 +72,6 @@ class MainActivity : ComponentActivity() {
                                 onThemeToggle = { isDarkThemeEnabled = it }
                             )
                         }
-
                         composable("login") {
                             LoginScreen(navController)
                         }
@@ -97,7 +98,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("notes") {
-                            NotesScreen(navController)
+                            NotesScreen(navController, dao)
                         }
                         composable("map") {
                             MapPage(navController)
@@ -108,16 +109,19 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private suspend fun insertSampleLogs() {
-        val sampleExerciseId = 1
-        val existing = database.trackFitDao().getExerciseLogsById(sampleExerciseId)
-        if (existing.isEmpty()) {
-            val sampleLogs = listOf(
-                ExerciseLogEntity(0, sampleExerciseId, "2025-04-18", 60f, 10),
-                ExerciseLogEntity(0, sampleExerciseId, "2025-04-20", 62.5f, 8),
-                ExerciseLogEntity(0, sampleExerciseId, "2025-04-25", 65f, 7)
-            )
-            database.trackFitDao().insertExerciseLogs(sampleLogs)
-        }
+    private suspend fun insertLogsFromApi() {
+        val dao = database.trackFitDao()
+        val apiLogs = ApiClient.getExerciseLogs()
+        dao.insertExerciseLogs(apiLogs)
+    }
+    private suspend fun insertNotesFromApi() {
+        val dao = database.trackFitDao()
+        val apiNotes = ApiClient.getNotes()
+        dao.insertNotes(apiNotes)
+    }
+    private suspend fun inserRoutinesFromApi() {
+        val dao = database.trackFitDao()
+        val apiRoutes = ApiClient.getRoutines()
+        dao.insertRoutines(apiRoutes)
     }
 }

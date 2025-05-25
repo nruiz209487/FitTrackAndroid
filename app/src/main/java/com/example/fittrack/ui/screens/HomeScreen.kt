@@ -23,7 +23,6 @@ import com.example.fittrack.api.ApiClient
 import com.example.fittrack.entity.RoutineEntity
 import com.example.fittrack.ui.ui_elements.NavBar
 
-//Lista de contactos
 @Composable
 fun HomeScreen(navController: NavController) {
     var routines by remember { mutableStateOf<List<RoutineEntity>>(emptyList()) }
@@ -33,8 +32,7 @@ fun HomeScreen(navController: NavController) {
     }
 
     Scaffold(
-        bottomBar = { NavBar(navController = navController) }
-    ) { innerPadding ->
+        bottomBar = { NavBar(navController = navController) }) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -42,11 +40,9 @@ fun HomeScreen(navController: NavController) {
                 .padding(16.dp)
         ) {
             RoutineGrid(
-                routines = routines,
-                onItemClick = { routine ->
+                routines = routines, onItemClick = { routine ->
                     navController.navigate("routine/${routine.id}")
-                }
-            )
+                })
         }
     }
 }
@@ -54,8 +50,7 @@ fun HomeScreen(navController: NavController) {
 
 @Composable
 fun RoutineGrid(
-    routines: List<RoutineEntity>,
-    onItemClick: (RoutineEntity) -> Unit
+    routines: List<RoutineEntity>, onItemClick: (RoutineEntity) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -64,17 +59,14 @@ fun RoutineGrid(
     ) {
         items(routines) { routine ->
             RoutineCard(
-                routine = routine,
-                onClick = { onItemClick(routine) }
-            )
+                routine = routine, onClick = { onItemClick(routine) })
         }
     }
 }
 
 @Composable
 fun RoutineCard(
-    routine: RoutineEntity,
-    onClick: () -> Unit
+    routine: RoutineEntity, onClick: () -> Unit
 ) {
     val context = LocalContext.current
     Card(
@@ -93,9 +85,7 @@ fun RoutineCard(
                 .padding(16.dp)
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(routine.imageUri)
-                    .crossfade(true)
+                model = ImageRequest.Builder(context).data(routine.imageUri).crossfade(true)
                     .build(),
                 contentDescription = "Imagen de la rutina ${routine.name}",
                 contentScale = ContentScale.Crop,

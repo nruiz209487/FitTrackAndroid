@@ -9,16 +9,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.fittrack.ui.ui_elements.NavBar
 
-//Ejecicio cambio e temas
 @Composable
 fun SettingsScreen(
-    navController: NavController,
-    darkTheme: Boolean,
-    onThemeToggle: (Boolean) -> Unit
+    navController: NavController, darkTheme: Boolean, onThemeToggle: (Boolean) -> Unit
 ) {
     Scaffold(
-        bottomBar = { NavBar(navController = navController) }
-    ) { innerPadding ->
+        bottomBar = { NavBar(navController = navController) }) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -39,9 +35,7 @@ fun SettingsScreen(
                 Text(text = "Modo Oscuro")
 
                 Switch(
-                    checked = darkTheme,
-                    onCheckedChange = { onThemeToggle(it) }
-                )
+                    checked = darkTheme, onCheckedChange = { onThemeToggle(it) })
             }
 
         }

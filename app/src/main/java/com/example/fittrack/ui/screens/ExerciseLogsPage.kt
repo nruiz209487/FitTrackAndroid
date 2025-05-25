@@ -16,18 +16,28 @@ import androidx.navigation.NavController
 import com.example.fittrack.entity.ExerciseLogEntity
 import com.example.fittrack.ui.ui_elements.NavBar
 import com.example.trackfit.database.TrackFitDao
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 
-//Lista de contactos
 @Composable
 fun ExerciseLogsPage(
-    exerciseId: Int,
-    navController: NavController,
-    dao: TrackFitDao
+    exerciseId: Int, navController: NavController, dao: TrackFitDao
 ) {
     var logs by remember { mutableStateOf<List<ExerciseLogEntity>>(emptyList()) }
+    var isDeleting by remember { mutableStateOf(false) }
+
+    fun refreshLogs() {
+        MainScope().launch {
+            logs = dao.getExerciseLogsById(exerciseId)
+        }
+    }
 
     LaunchedEffect(exerciseId) {
-        logs = dao.getExerciseLogsById(exerciseId)
+        refreshLogs()
     }
 
     Scaffold(
@@ -48,7 +58,14 @@ fun ExerciseLogsPage(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(logs) { log ->
-                        LogItemCard(log = log)
+                        LogItemCard(log = log, onDelete = { logToDelete ->
+                            isDeleting = true
+                            MainScope().launch {
+                                dao.deleteExerciseLogs(logToDelete)
+                                refreshLogs()
+                                isDeleting = false
+                            }
+                        })
                     }
                 }
             }
@@ -57,7 +74,7 @@ fun ExerciseLogsPage(
 }
 
 @Composable
-private fun LogItemCard(log: ExerciseLogEntity) {
+private fun LogItemCard(log: ExerciseLogEntity, onDelete: (ExerciseLogEntity) -> Unit) {
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -66,39 +83,55 @@ private fun LogItemCard(log: ExerciseLogEntity) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
+        Row(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f)
             ) {
-                Column {
-                    Text("Peso", style = MaterialTheme.typography.bodySmall)
-                    Text(
-                        "${log.weight} kg",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        Text("Peso", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "${log.weight} kg",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("Repeticiones", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "${log.reps}",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
                 }
 
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("Repeticiones", style = MaterialTheme.typography.bodySmall)
+                if (log.date.isNotEmpty()) {
                     Text(
-                        "${log.reps}",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                        text = log.date,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                     )
                 }
             }
 
-            if (log.date.isNotEmpty()) {
-                Text(
-                    text = log.date,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+            Spacer(modifier = Modifier.width(8.dp))
+
+            IconButton(onClick = { onDelete(log) }) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Eliminar registro",
+                    tint = MaterialTheme.colorScheme.error
                 )
             }
         }
@@ -115,8 +148,7 @@ private fun EmptyLogsState() {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "📝",
-            style = MaterialTheme.typography.displayMedium
+            text = "📝", style = MaterialTheme.typography.displayMedium
         )
         Spacer(Modifier.height(16.dp))
         Text(

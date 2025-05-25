@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.fittrack.MainActivity
 import com.example.fittrack.api.ApiClient
 import com.example.fittrack.entity.*
 import com.example.trackfit.database.TrackFitDao
@@ -23,12 +24,9 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-//Ejercicio lista d econtactos
 @Composable
 fun RoutinePage(
-    navController: NavController,
-    routineId: Int,
-    dao: TrackFitDao
+    navController: NavController, routineId: Int, dao: TrackFitDao
 ) {
     var routine by remember { mutableStateOf<RoutineEntity?>(null) }
     var exercises by remember { mutableStateOf(emptyList<ExerciseEntity>()) }
@@ -39,8 +37,10 @@ fun RoutinePage(
     var isSaving by remember { mutableStateOf(false) }
     var showSavedMessage by remember { mutableStateOf(false) }
 
+    val dao = MainActivity.database.trackFitDao()
+
     LaunchedEffect(Unit) {
-        routine = ApiClient.getRoutines().find { it.id == routineId }?.also { foundRoutine ->
+        routine = dao.getRoutines().find { it.id == routineId }?.also { foundRoutine ->
             val allExercises = ApiClient.getExercises()
             val ids = foundRoutine.exerciseIds.split(",").mapNotNull { it.toIntOrNull() }
             exercises = allExercises.filter { it.id in ids }
@@ -56,8 +56,7 @@ fun RoutinePage(
 
     if (exercises.isEmpty()) {
         Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
         ) {
             Text("No hay ejercicios para esta rutina.")
         }
@@ -107,15 +106,14 @@ fun RoutinePage(
                             weightText = ""
                             repsText = ""
                             showSavedMessage = true
-                        }
-                    )
+                        })
                 },
                 isSaving = isSaving
             )
         }
 
         if (showSavedMessage) {
-            SavedMessageCard()
+            SavedNoteCard()
         }
 
         Spacer(Modifier.height(16.dp))
@@ -142,17 +140,14 @@ fun RoutinePage(
 @Composable
 private fun ExerciseCard(exercise: ExerciseEntity) {
     Card(
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier
+        shape = RoundedCornerShape(12.dp), modifier = Modifier
             .fillMaxWidth()
             .height(300.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(exercise.imageUri)
-                    .crossfade(true)
-                    .build(),
+                model = ImageRequest.Builder(LocalContext.current).data(exercise.imageUri)
+                    .crossfade(true).build(),
                 contentDescription = exercise.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -184,12 +179,10 @@ private fun LogInputCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
-        shape = RoundedCornerShape(8.dp)
+            .padding(8.dp), shape = RoundedCornerShape(8.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Registrar ${current.name}", style = MaterialTheme.typography.titleMedium)
 
@@ -218,8 +211,7 @@ private fun LogInputCard(
             Spacer(Modifier.height(16.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 OutlinedButton(onClick = onCancel) {
                     Text("Cancelar")
@@ -243,7 +235,7 @@ private fun LogInputCard(
 }
 
 @Composable
-private fun SavedMessageCard() {
+private fun SavedNoteCard() {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         modifier = Modifier
@@ -276,8 +268,7 @@ private fun NavigationButtons(
     showLogButton: Boolean
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Button(onClick = onPrev, enabled = currentIndex > 0) {
             Text("Anterior")
