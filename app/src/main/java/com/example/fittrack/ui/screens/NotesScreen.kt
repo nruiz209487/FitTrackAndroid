@@ -143,10 +143,6 @@ fun NoteCard(post: NoteEntity, onDelete: (NoteEntity) -> Unit) {
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
                     Text(
                         text = post.header,
                         style = MaterialTheme.typography.titleLarge.copy(
@@ -165,9 +161,7 @@ fun NoteCard(post: NoteEntity, onDelete: (NoteEntity) -> Unit) {
                             letterSpacing = 0.3.sp
                         ),
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        modifier = Modifier.alignByBaseline()
                     )
-                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -185,7 +179,6 @@ fun NoteCard(post: NoteEntity, onDelete: (NoteEntity) -> Unit) {
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Botón eliminar (ícono de basura)
             IconButton(onClick = { onDelete(post) }) {
                 Icon(
                     imageVector = Icons.Default.Delete,

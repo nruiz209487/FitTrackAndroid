@@ -40,7 +40,7 @@ sealed class NavItem(
 
 @Composable
 fun NavBar(navController: NavController) {
-    val items = listOf(NavItem.Home, NavItem.ExerciseList, NavItem.Profile, NavItem.Notes)
+    val items = listOf(NavItem.Home, NavItem.ExerciseList, NavItem.Notes , NavItem.Profile)
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 

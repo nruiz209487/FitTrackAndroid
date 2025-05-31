@@ -27,7 +27,6 @@ fun UserDataScreen(navController: NavController) {
     var editedProfileImage by remember { mutableStateOf("") }
     val apiService = remember { ApiClient }
 
-    // Cargar datos del usuario al iniciar
     LaunchedEffect(Unit) {
         user = apiService.getUser()
         user?.let {
@@ -88,10 +87,8 @@ fun UserDataScreen(navController: NavController) {
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                // Botón de guardar
                 Button(
                     onClick = {
-                        // Aquí iría la llamada a la API para actualizar
                         val updatedUser = user!!.copy(
                             name = editedName,
                             email = editedEmail,

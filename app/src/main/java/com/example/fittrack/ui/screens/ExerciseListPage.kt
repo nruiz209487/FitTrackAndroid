@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.fittrack.api.ApiClient
+import com.example.fittrack.MainActivity
 import com.example.fittrack.entity.ExerciseEntity
 import com.example.fittrack.ui.ui_elements.NavBar
 
@@ -27,8 +27,9 @@ fun ExerciseListPage(
     navController: NavController
 ) {
     var exercises by remember { mutableStateOf<List<ExerciseEntity>>(emptyList()) }
+    val dao = MainActivity.database.trackFitDao()
     LaunchedEffect(Unit) {
-        exercises = ApiClient.getExercises()
+        exercises = dao.getExercises()
     }
 
     Scaffold(

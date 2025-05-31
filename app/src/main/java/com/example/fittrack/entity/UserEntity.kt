@@ -18,5 +18,6 @@ data class UserEntity(
     @ColumnInfo(name = "streak_days")
     val streakDays: Int? = null,
     @ColumnInfo(name = "profile_image")
-    val profileImage: String? = null
+    val profileImage: String? = null,
+
 )

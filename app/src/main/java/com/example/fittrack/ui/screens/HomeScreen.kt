@@ -19,20 +19,45 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.fittrack.api.ApiClient
+import com.example.fittrack.MainActivity
 import com.example.fittrack.entity.RoutineEntity
 import com.example.fittrack.ui.ui_elements.NavBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(navController: NavController) {
     var routines by remember { mutableStateOf<List<RoutineEntity>>(emptyList()) }
+    val coroutineScope = rememberCoroutineScope()
+    val dao = MainActivity.database.trackFitDao()
+
+    fun loadRoutines() {
+        coroutineScope.launch {
+            routines = dao.getRoutines()
+        }
+    }
 
     LaunchedEffect(Unit) {
-        routines = ApiClient.getRoutines()
+        loadRoutines()
     }
 
     Scaffold(
-        bottomBar = { NavBar(navController = navController) }) { innerPadding ->
+        bottomBar = { NavBar(navController = navController) },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navController.navigate("create_routine") },
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Crear nueva rutina",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+        }
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -40,17 +65,28 @@ fun HomeScreen(navController: NavController) {
                 .padding(16.dp)
         ) {
             RoutineGrid(
-                routines = routines, onItemClick = { routine ->
+                routines = routines,
+                onItemClick = { routine ->
                     navController.navigate("routine/${routine.id}")
-                })
+                },
+                onDeleteRoutine = { routine ->
+                    coroutineScope.launch {
+                        dao.deleteRoutine(routine)
+                        loadRoutines()
+                    }
+                }
+            )
         }
     }
 }
 
 
+
 @Composable
 fun RoutineGrid(
-    routines: List<RoutineEntity>, onItemClick: (RoutineEntity) -> Unit
+    routines: List<RoutineEntity>,
+    onItemClick: (RoutineEntity) -> Unit,
+    onDeleteRoutine: (RoutineEntity) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -59,16 +95,22 @@ fun RoutineGrid(
     ) {
         items(routines) { routine ->
             RoutineCard(
-                routine = routine, onClick = { onItemClick(routine) })
+                routine = routine,
+                onClick = { onItemClick(routine) },
+                onDelete = { onDeleteRoutine(routine) }
+            )
         }
     }
 }
 
 @Composable
 fun RoutineCard(
-    routine: RoutineEntity, onClick: () -> Unit
+    routine: RoutineEntity,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
 ) {
     val context = LocalContext.current
+
     Card(
         modifier = Modifier
             .padding(8.dp)
@@ -84,16 +126,31 @@ fun RoutineCard(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(context).data(routine.imageUri).crossfade(true)
-                    .build(),
-                contentDescription = "Imagen de la rutina ${routine.name}",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .height(120.dp)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-            )
+            Box {
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(routine.imageUri)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Imagen de la rutina ${routine.name}",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .height(120.dp)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                )
+
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.align(Alignment.TopEnd)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Eliminar rutina",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 

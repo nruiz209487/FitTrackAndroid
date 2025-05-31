@@ -1,15 +1,17 @@
 package com.example.trackfit.database
 
 import androidx.room.*
+import com.example.fittrack.entity.ExerciseEntity
 import com.example.fittrack.entity.ExerciseLogEntity
 import com.example.fittrack.entity.NoteEntity
 import com.example.fittrack.entity.RoutineEntity
+import com.example.fittrack.entity.UserEntity
 
 @Dao
 interface TrackFitDao {
     @Insert
     suspend fun insertExerciseLog(exerciseLog: ExerciseLogEntity)
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExerciseLogs(exerciseLogs: List<ExerciseLogEntity>)
     @Query("SELECT * FROM exercise_log_table WHERE exerciseId = :exerciseId")
     suspend fun getExerciseLogsById(exerciseId: Int): List<ExerciseLogEntity>
@@ -33,6 +35,31 @@ interface TrackFitDao {
     suspend fun deleteRoutine(routine: RoutineEntity)
     @Query("SELECT * FROM routine_table ")
     suspend fun getRoutines(): List<RoutineEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertExercies(routine: List<ExerciseEntity>)
+    @Insert
+    suspend fun insertExercise(routine: ExerciseEntity)
+    @Delete
+    suspend fun deleteExercise(routine: ExerciseEntity)
+    @Query("SELECT * FROM exercise_table ")
+    suspend fun getExercises(): List<ExerciseEntity>
+    @Query("SELECT * FROM exercise_table WHERE id IN (:ids)")
+    suspend fun getExercisesByIds(ids: List<Int>): List<ExerciseEntity>
+
+
+
+    @Query("SELECT * FROM users WHERE id = :userId")
+    suspend fun getUserById(userId: Int): UserEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUser(user: UserEntity)
+
+    @Update
+    suspend fun updateUser(user: UserEntity)
+
+    @Delete
+    suspend fun deleteUser(user: UserEntity)
 
 
 }

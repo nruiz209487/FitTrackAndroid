@@ -1,5 +1,6 @@
 package com.example.fittrack.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -10,5 +11,7 @@ data class RoutineEntity(
     val name: String = "",
     val description: String = "",
     val imageUri: String = "",
-    val exerciseIds: String = ""
+    val exerciseIds: String = "",
+    val user_id: String = ""
+
 )

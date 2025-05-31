@@ -16,7 +16,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.example.fittrack.api.ApiClient
 import com.example.fittrack.database.TrackFitDatabase
-import com.example.fittrack.entity.ExerciseLogEntity
 import com.example.fittrack.ui.screens.*
 import com.example.fittrack.ui.theme.FitTrackTheme
 import kotlinx.coroutines.launch
@@ -41,6 +40,7 @@ class MainActivity : ComponentActivity() {
             insertLogsFromApi()
             insertNotesFromApi()
             inserRoutinesFromApi()
+            insertExercisesFromApi()
         }
 
         enableEdgeToEdge()
@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
                         composable("settings") {
                             SettingsScreen(
                                 navController = navController,
-                                darkTheme = isDarkThemeEnabled,  // Boolean
+                                darkTheme = isDarkThemeEnabled,
                                 onThemeToggle = { isDarkThemeEnabled = it }
                             )
                         }
@@ -82,7 +82,7 @@ class MainActivity : ComponentActivity() {
                             val id = backStackEntry.arguments
                                 ?.getString("routineId")
                                 ?.toIntOrNull() ?: return@composable
-                            RoutinePage(navController, id, dao)
+                            RoutinePage(navController, id)
                         }
                         composable("exercise_list") {
                             ExerciseListPage(navController)
@@ -100,6 +100,9 @@ class MainActivity : ComponentActivity() {
                         composable("notes") {
                             NotesScreen(navController, dao)
                         }
+                        composable("create_routine") {
+                            CreateRoutinePage(navController)
+                        }
                         composable("map") {
                             MapPage(navController)
                         }
@@ -111,17 +114,22 @@ class MainActivity : ComponentActivity() {
 
     private suspend fun insertLogsFromApi() {
         val dao = database.trackFitDao()
-        val apiLogs = ApiClient.getExerciseLogs()
+        val apiLogs = ApiClient.getExerciseLogs(1)
         dao.insertExerciseLogs(apiLogs)
     }
     private suspend fun insertNotesFromApi() {
         val dao = database.trackFitDao()
-        val apiNotes = ApiClient.getNotes()
+        val apiNotes = ApiClient.getNotes(1)
         dao.insertNotes(apiNotes)
     }
     private suspend fun inserRoutinesFromApi() {
         val dao = database.trackFitDao()
-        val apiRoutes = ApiClient.getRoutines()
-        dao.insertRoutines(apiRoutes)
+        val apiRoutines = ApiClient.getRoutines(1)
+        dao.insertRoutines(apiRoutines)
+    }
+    private suspend fun insertExercisesFromApi() {
+        val dao = database.trackFitDao()
+        val apiExercises = ApiClient.getExercises()
+        dao.insertExercies(apiExercises)
     }
 }

@@ -15,7 +15,6 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.fittrack.MainActivity
-import com.example.fittrack.api.ApiClient
 import com.example.fittrack.entity.*
 import com.example.trackfit.database.TrackFitDao
 import kotlinx.coroutines.MainScope
@@ -26,7 +25,7 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun RoutinePage(
-    navController: NavController, routineId: Int, dao: TrackFitDao
+    navController: NavController, routineId: Int
 ) {
     var routine by remember { mutableStateOf<RoutineEntity?>(null) }
     var exercises by remember { mutableStateOf(emptyList<ExerciseEntity>()) }
@@ -41,11 +40,11 @@ fun RoutinePage(
 
     LaunchedEffect(Unit) {
         routine = dao.getRoutines().find { it.id == routineId }?.also { foundRoutine ->
-            val allExercises = ApiClient.getExercises()
             val ids = foundRoutine.exerciseIds.split(",").mapNotNull { it.toIntOrNull() }
-            exercises = allExercises.filter { it.id in ids }
+            exercises = dao.getExercisesByIds(ids)
         }
     }
+
 
     LaunchedEffect(showSavedMessage) {
         if (showSavedMessage) {
