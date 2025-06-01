@@ -91,4 +91,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     kapt(libs.androidx.room.compiler) // 👈 AÑADE ESTA LÍNEA
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
 }

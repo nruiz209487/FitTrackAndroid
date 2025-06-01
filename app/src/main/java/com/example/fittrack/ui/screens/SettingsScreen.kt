@@ -11,10 +11,13 @@ import com.example.fittrack.ui.ui_elements.NavBar
 
 @Composable
 fun SettingsScreen(
-    navController: NavController, darkTheme: Boolean, onThemeToggle: (Boolean) -> Unit
+    navController: NavController,
+    darkTheme: Boolean,
+    onThemeToggle: (Boolean) -> Unit
 ) {
     Scaffold(
-        bottomBar = { NavBar(navController = navController) }) { innerPadding ->
+        bottomBar = { NavBar(navController = navController) }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -22,9 +25,7 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.Top
         ) {
-
             Text(text = "Ajustes de la aplicación", style = MaterialTheme.typography.titleLarge)
-
             Spacer(modifier = Modifier.height(24.dp))
 
             Row(
@@ -33,11 +34,8 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = "Modo Oscuro")
-
-                Switch(
-                    checked = darkTheme, onCheckedChange = { onThemeToggle(it) })
+                Switch(checked = darkTheme, onCheckedChange = onThemeToggle)
             }
-
         }
     }
 }

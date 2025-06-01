@@ -18,6 +18,7 @@ import com.example.fittrack.ui.ui_elements.NavBar
 import com.example.trackfit.database.TrackFitDao
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import kotlinx.coroutines.MainScope
@@ -27,12 +28,16 @@ import kotlinx.coroutines.launch
 fun ExerciseLogsPage(
     exerciseId: Int, navController: NavController, dao: TrackFitDao
 ) {
-    var logs by remember { mutableStateOf<List<ExerciseLogEntity>>(emptyList()) }
+    var allLogs by remember { mutableStateOf<List<ExerciseLogEntity>>(emptyList()) }
+    var filteredLogs by remember { mutableStateOf<List<ExerciseLogEntity>>(emptyList()) }
+    var searchQuery by remember { mutableStateOf("") }
+    var logToDelete by remember { mutableStateOf<ExerciseLogEntity?>(null) }
     var isDeleting by remember { mutableStateOf(false) }
 
     fun refreshLogs() {
         MainScope().launch {
-            logs = dao.getExerciseLogsById(exerciseId)
+            allLogs = dao.getExerciseLogsById(exerciseId)
+            filteredLogs = allLogs
         }
     }
 
@@ -40,39 +45,118 @@ fun ExerciseLogsPage(
         refreshLogs()
     }
 
+    LaunchedEffect(searchQuery, allLogs) {
+        filteredLogs = if (searchQuery.isBlank()) {
+            allLogs
+        } else {
+            allLogs.filter { log ->
+                log.date.contains(searchQuery, ignoreCase = true) ||
+                        log.weight.toString().contains(searchQuery, ignoreCase = true) ||
+                        log.reps.toString().contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
+
     Scaffold(
         bottomBar = { NavBar(navController = navController) }
     ) { innerPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .padding(16.dp)
         ) {
-            if (logs.isEmpty()) {
-                EmptyLogsState()
+            // Barra de búsqueda
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                placeholder = { Text("Buscar registros...") },
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = "Buscar")
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            if (filteredLogs.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (allLogs.isEmpty()) {
+                        EmptyLogsState()
+                    } else {
+                        Text(
+                            text = "No se encontraron registros con '$searchQuery'",
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             } else {
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
+                    modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(logs) { log ->
-                        LogItemCard(log = log, onDelete = { logToDelete ->
-                            isDeleting = true
-                            MainScope().launch {
-                                dao.deleteExerciseLogs(logToDelete)
-                                refreshLogs()
-                                isDeleting = false
-                            }
-                        })
+                    items(filteredLogs) { log ->
+                        LogItemCard(
+                            log = log,
+                            onDelete = { logToDelete = it }
+                        )
                     }
                 }
             }
         }
     }
-}
 
+    // Diálogo de confirmación para eliminar
+    if (logToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { logToDelete = null },
+            title = { Text("Confirmar eliminación") },
+            text = {
+                Column {
+                    Text("¿Estás seguro de que quieres eliminar este registro?")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "${logToDelete?.weight} kg × ${logToDelete?.reps} reps",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                    Text(
+                        text = logToDelete?.date ?: "",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        isDeleting = true
+                        MainScope().launch {
+                            logToDelete?.let { dao.deleteExerciseLogs(it) }
+                            refreshLogs()
+                            isDeleting = false
+                            logToDelete = null
+                        }
+                    }
+                ) {
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { logToDelete = null }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+}
 @Composable
 private fun LogItemCard(log: ExerciseLogEntity, onDelete: (ExerciseLogEntity) -> Unit) {
     Card(

@@ -8,4 +8,5 @@ interface ApiRoutes {
     suspend fun getUser(): UserEntity
     suspend fun getNotes(userId: Int): List<NoteEntity>
     suspend fun getExerciseLogs(userId: Int): List<ExerciseLogEntity>
+    suspend fun getTargetLocations(): List<TargetLocationEntity>
 }

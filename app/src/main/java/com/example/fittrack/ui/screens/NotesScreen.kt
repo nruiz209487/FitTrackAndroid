@@ -1,5 +1,14 @@
 package com.example.fittrack.ui.screens
 
+import android.Manifest
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,46 +20,104 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.core.content.ContextCompat
 import com.example.fittrack.entity.NoteEntity
 import com.example.fittrack.ui.ui_elements.NavBar
 import com.example.trackfit.database.TrackFitDao
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.ui.text.style.TextAlign
+import com.example.fittrack.service.NotificationService
+import java.time.ZoneId
+
 @Composable
 fun NotesScreen(navController: NavController, dao: TrackFitDao) {
-    var posts by remember { mutableStateOf<List<NoteEntity>>(emptyList()) }
+    var allNotes by remember { mutableStateOf<List<NoteEntity>>(emptyList()) }
+    var searchQuery by remember { mutableStateOf("") }
     var showForm by remember { mutableStateOf(false) }
-    var isSaving by remember { mutableStateOf(false) }
-    var isDeleting by remember { mutableStateOf(false) }
+    var noteToDelete by remember { mutableStateOf<NoteEntity?>(null) }
+    var hasNotificationPermission by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasNotificationPermission = isGranted
+    }
+
+    val filteredNotes = remember(searchQuery, allNotes) {
+        if (searchQuery.isBlank()) allNotes
+        else allNotes.filter {
+            it.header.contains(searchQuery, true) ||
+                    it.text.contains(searchQuery, true)
+        }
+    }
 
     fun refreshNotes() {
-        MainScope().launch {
-            posts = dao.getNotes()
-        }
+        MainScope().launch { allNotes = dao.getNotes() }
     }
 
     LaunchedEffect(Unit) {
         refreshNotes()
+        hasNotificationPermission = checkNotificationPermission(context)
+        if (!hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
-    Scaffold(
-        bottomBar = { NavBar(navController = navController) }
-    ) { innerPadding ->
+    Scaffold(bottomBar = { NavBar(navController) }) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(padding)
                 .padding(16.dp)
         ) {
+            if (!hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                Button(
+                    onClick = { permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.NotificationsOff,
+                        contentDescription = "Permisos faltantes"
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Activar notificaciones")
+                }
+            }
+
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Buscar notas...") },
+                leadingIcon = { Icon(Icons.Default.Search, null) },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            Spacer(Modifier.height(16.dp))
+
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.weight(1f)
@@ -58,131 +125,158 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                 if (showForm) {
                     item {
                         NoteInputForm(
+                            hasNotificationPermission = hasNotificationPermission,
+                            onRequestPermission = {
+                                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            },
                             onCancel = { showForm = false },
-                            onSave = { header, text ->
-                                isSaving = true
+                            onSave = { header, text, notificationDateTime ->
                                 saveNote(
                                     dao = dao,
                                     header = header,
                                     text = text,
-                                    onStart = {},
+                                    notificationDateTime = notificationDateTime,
+                                    context = context,
                                     onComplete = {
-                                        isSaving = false
                                         showForm = false
                                         refreshNotes()
-                                    })
+                                    }
+                                )
                             }
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
-                items(posts) { post ->
-                    NoteCard(post = post, onDelete = { noteToDelete ->
-                        isDeleting = true
-                        MainScope().launch {
-                            dao.deleteNote(noteToDelete)
-                            refreshNotes()
-                            isDeleting = false
+
+                if (filteredNotes.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (allNotes.isEmpty()) "No hay notas disponibles"
+                                else "No se encontraron notas",
+                                textAlign = TextAlign.Center
+                            )
                         }
-                    })
+                    }
+                } else {
+                    items(filteredNotes) { note ->
+                        NoteCard(note = note, onDelete = { noteToDelete = it })
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
             FilledTonalButton(
                 onClick = { showForm = true },
                 shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isSaving && !isDeleting
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Crear Nueva Nota")
             }
         }
     }
+
+    // Diálogo de eliminación
+    noteToDelete?.let { note ->
+        AlertDialog(
+            onDismissRequest = { noteToDelete = null },
+            title = { Text("Confirmar eliminación") },
+            text = { Text("¿Eliminar esta nota?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        MainScope().launch {
+                            cancelNotification(context, note.id)
+                            dao.deleteNote(note)
+                            refreshNotes()
+                            noteToDelete = null
+                        }
+                    }
+                ) {
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { noteToDelete = null }) { Text("Cancelar") }
+            }
+        )
+    }
 }
 
 @Composable
-fun NoteCard(post: NoteEntity, onDelete: (NoteEntity) -> Unit) {
+fun NoteCard(note: NoteEntity, onDelete: (NoteEntity) -> Unit) {
+    val hasNotification = note.timestamp.startsWith("NOTIFICATION:")
+    val displayTime = formatTimestamp(note.timestamp)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = 10.dp,
-                shape = RoundedCornerShape(16.dp),
-                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-            ),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-        )
+            .shadow(8.dp, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .width(6.dp)
-                    .fillMaxHeight()
+                    .width(4.dp)
+                    .height(60.dp)
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
                                 MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.tertiary
+                                MaterialTheme.colorScheme.secondary
                             )
                         ),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(2.dp)
                     )
             )
 
-            Spacer(modifier = Modifier.width(20.dp))
+            Spacer(Modifier.width(16.dp))
 
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = post.header,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = (-0.5).sp
-                        ),
-                        color = MaterialTheme.colorScheme.primary,
+                        text = note.header,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
-
-                    Text(
-                        text = post.timestamp,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 12.sp,
-                            letterSpacing = 0.3.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    )
-
-                Spacer(modifier = Modifier.height(12.dp))
+                    if (hasNotification) {
+                        Icon(
+                            Icons.Default.Notifications,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
 
                 Text(
-                    text = post.text,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        lineHeight = 22.sp,
-                        fontSize = 15.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
-                    maxLines = 3,
+                    text = displayTime,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    text = note.text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            IconButton(onClick = { onDelete(post) }) {
+            IconButton(onClick = { onDelete(note) }) {
                 Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar Nota",
+                    Icons.Default.Delete,
+                    contentDescription = "Eliminar",
                     tint = MaterialTheme.colorScheme.error
                 )
             }
@@ -190,33 +284,37 @@ fun NoteCard(post: NoteEntity, onDelete: (NoteEntity) -> Unit) {
     }
 }
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteInputForm(
-    onCancel: () -> Unit, onSave: (String, String) -> Unit
+    hasNotificationPermission: Boolean,
+    onRequestPermission: () -> Unit,
+    onCancel: () -> Unit,
+    onSave: (String, String, LocalDateTime?) -> Unit
 ) {
-    var headerText by remember { mutableStateOf("") }
-    var contentText by remember { mutableStateOf("") }
+    var header by remember { mutableStateOf("") }
+    var content by remember { mutableStateOf("") }
+    var enableNotification by remember { mutableStateOf(false) }
+    var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+    var selectedTime by remember { mutableStateOf("12:00") }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    val datePickerState = rememberDatePickerState()
+    val timePickerState = rememberTimePickerState(12, 0)
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(4.dp, shape = RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Crear Nueva Nota", style = MaterialTheme.typography.titleMedium)
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Nueva Nota", style = MaterialTheme.typography.titleLarge)
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = headerText,
-                onValueChange = { headerText = it },
+                value = header,
+                onValueChange = { header = it },
                 label = { Text("Título") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -225,44 +323,210 @@ fun NoteInputForm(
             Spacer(Modifier.height(12.dp))
 
             OutlinedTextField(
-                value = contentText,
-                onValueChange = { contentText = it },
+                value = content,
+                onValueChange = { content = it },
                 label = { Text("Contenido") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                minLines = 3
             )
 
             Spacer(Modifier.height(16.dp))
 
+            // Switch de notificación
             Row(
-                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        if (enableNotification) Icons.Default.Notifications
+                        else Icons.Default.NotificationsOff,
+                        contentDescription = null
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Programar recordatorio")
+                }
+                Switch(
+                    checked = enableNotification,
+                    onCheckedChange = {
+                        if (it && !hasNotificationPermission) onRequestPermission()
+                        else enableNotification = it
+                    },
+                    enabled = hasNotificationPermission
+                )
+            }
+
+            // Selectores de fecha y hora
+            if (enableNotification && hasNotificationPermission) {
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { showDatePicker = true },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(selectedDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "Fecha")
+                    }
+                    OutlinedButton(
+                        onClick = { showTimePicker = true },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(selectedTime)
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
-                    onClick = onCancel, shape = RoundedCornerShape(12.dp)
+                    onClick = onCancel,
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text("Cancelar")
                 }
                 FilledTonalButton(
-                    onClick = { onSave(headerText, contentText) },
-                    enabled = headerText.isNotEmpty() && contentText.isNotEmpty(),
-                    shape = RoundedCornerShape(12.dp)
+                    onClick = {
+                        val notificationDateTime = if (enableNotification && selectedDate != null) {
+                            val timeParts = selectedTime.split(":")
+                            LocalDateTime.of(
+                                selectedDate,
+                                java.time.LocalTime.of(timeParts[0].toInt(), timeParts[1].toInt())
+                            )
+                        } else null
+                        onSave(header, content, notificationDateTime)
+                    },
+                    enabled = header.isNotEmpty() && content.isNotEmpty(),
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text("Guardar")
                 }
             }
         }
     }
+
+    // DatePicker
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let {
+                            selectedDate = LocalDate.ofEpochDay(it / (24 * 60 * 60 * 1000))
+                        }
+                        showDatePicker = false
+                    }
+                ) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(datePickerState)
+        }
+    }
+
+    // TimePicker
+    if (showTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text("Seleccionar hora") },
+            text = { TimePicker(timePickerState) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        selectedTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute)
+                        showTimePicker = false
+                    }
+                ) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") }
+            }
+        )
+    }
+}
+
+private fun checkNotificationPermission(context: Context): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        ContextCompat.checkSelfPermission(
+            context, Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+    } else true
 }
 
 private fun saveNote(
-    dao: TrackFitDao, header: String, text: String, onStart: () -> Unit, onComplete: () -> Unit
+    dao: TrackFitDao,
+    header: String,
+    text: String,
+    notificationDateTime: LocalDateTime?,
+    context: Context,
+    onComplete: () -> Unit
 ) {
-    onStart()
-    val note = NoteEntity(
-        header = header, text = text, timestamp = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-    )
+    val timestampString = if (notificationDateTime != null) {
+        "NOTIFICATION:${notificationDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)}"
+    } else {
+        LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+    }
+
+    val note = NoteEntity(header = header, text = text, timestamp = timestampString)
+
     MainScope().launch {
         dao.insertNote(note)
+
+        if (notificationDateTime != null) {
+            val insertedNote = dao.getNotes().find {
+                it.header == header && it.text == text && it.timestamp == timestampString
+            }
+            insertedNote?.let { scheduleNotification(context, it, notificationDateTime) }
+        }
+
         onComplete()
+    }
+}
+
+private fun scheduleNotification(context: Context, note: NoteEntity, dateTime: LocalDateTime) {
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val intent = Intent(context, NotificationService::class.java).apply {
+        putExtra("note_id", note.id)
+        putExtra("note_title", note.header)
+        putExtra("note_content", note.text)
+    }
+
+    val pendingIntent = PendingIntent.getBroadcast(
+        context, note.id, intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    val triggerTime = dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+}
+
+private fun cancelNotification(context: Context, noteId: Int) {
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val intent = Intent(context, NotificationService::class.java)
+    val pendingIntent = PendingIntent.getBroadcast(
+        context, noteId, intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+    alarmManager.cancel(pendingIntent)
+}
+
+private fun formatTimestamp(timestamp: String): String {
+    return if (timestamp.startsWith("NOTIFICATION:")) {
+        val dateTimeString = timestamp.removePrefix("NOTIFICATION:")
+        val dateTime = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        "Recordatorio: ${dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}"
+    } else {
+        val date = LocalDate.parse(timestamp, DateTimeFormatter.ISO_DATE)
+        date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
     }
 }

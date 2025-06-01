@@ -6,15 +6,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -34,13 +38,18 @@ fun CreateRoutinePage(navController: NavController) {
     var exercises by remember { mutableStateOf<List<ExerciseEntity>>(emptyList()) }
     var selectedExercises by remember { mutableStateOf<Set<Int>>(emptySet()) }
     var routineName by remember { mutableStateOf("") }
-    var showDialog by remember { mutableStateOf(false) }
     var routineDescription by remember { mutableStateOf("") }
+    var showDialog by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
     val dao = MainActivity.database.trackFitDao()
 
     LaunchedEffect(Unit) {
         exercises = dao.getExercises()
+    }
+
+    val filteredExercises = exercises.filter { exercise ->
+        exercise.name.contains(searchQuery, ignoreCase = true)
     }
 
     Scaffold(
@@ -75,7 +84,7 @@ fun CreateRoutinePage(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(2.dp)
         ) {
             OutlinedTextField(
                 value = routineName,
@@ -85,15 +94,32 @@ fun CreateRoutinePage(navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
+
             OutlinedTextField(
                 value = routineDescription,
                 onValueChange = { routineDescription = it },
-                label = { Text("Descrpcion de la rutina") },
+                label = { Text("Descripción de la rutina") },
                 placeholder = { Text("Ej: Rutina lunes") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
+
             Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                placeholder = { Text("Buscar ejercicios...") },
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = "Buscar")
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                shape = RoundedCornerShape(12.dp)
+            )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -104,7 +130,7 @@ fun CreateRoutinePage(navController: NavController) {
                 Text("${selectedExercises.size} seleccionados")
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             if (exercises.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -118,7 +144,7 @@ fun CreateRoutinePage(navController: NavController) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(exercises) { exercise ->
+                    items(filteredExercises) { exercise ->
                         ExerciseSelectionCard(
                             exercise = exercise,
                             isSelected = selectedExercises.contains(exercise.id),

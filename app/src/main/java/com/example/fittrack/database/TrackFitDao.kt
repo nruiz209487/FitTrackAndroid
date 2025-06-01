@@ -5,6 +5,7 @@ import com.example.fittrack.entity.ExerciseEntity
 import com.example.fittrack.entity.ExerciseLogEntity
 import com.example.fittrack.entity.NoteEntity
 import com.example.fittrack.entity.RoutineEntity
+import com.example.fittrack.entity.TargetLocationEntity
 import com.example.fittrack.entity.UserEntity
 
 @Dao
@@ -52,6 +53,9 @@ interface TrackFitDao {
     @Query("SELECT * FROM users WHERE id = :userId")
     suspend fun getUserById(userId: Int): UserEntity?
 
+    @Query("SELECT * FROM users LIMIT 1")
+    suspend fun getUser(): UserEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserEntity)
 
@@ -61,5 +65,10 @@ interface TrackFitDao {
     @Delete
     suspend fun deleteUser(user: UserEntity)
 
+
+    @Query("SELECT * FROM target_location_table ")
+    suspend fun getTargetLocations(): List<TargetLocationEntity>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTargetLocations(targetLocations: List<TargetLocationEntity>)
 
 }

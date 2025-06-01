@@ -67,7 +67,7 @@ fun RoutinePage(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(2.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = routine?.name ?: "", style = MaterialTheme.typography.headlineSmall)

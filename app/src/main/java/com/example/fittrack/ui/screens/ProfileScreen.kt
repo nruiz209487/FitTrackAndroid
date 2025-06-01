@@ -6,7 +6,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.DateRange
@@ -28,17 +27,16 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.fittrack.api.ApiClient
+import com.example.fittrack.MainActivity
 import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.ui.ui_elements.NavBar
 
 @Composable
 fun ProfileScreen(navController: NavController) {
     var user by remember { mutableStateOf<UserEntity?>(null) }
-    val apiService = remember { ApiClient }
-
+    val dao = MainActivity.database.trackFitDao()
     LaunchedEffect(Unit) {
-        user = apiService.getUser()
+        user = dao.getUser()
     }
 
     Scaffold(
@@ -84,20 +82,6 @@ private fun ProfileHeader(user: UserEntity) {
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.SemiBold
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            FilledTonalButton(
-                onClick = { /* Actualizar foto */ }, shape = RoundedCornerShape(10.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Actualizar foto")
-            }
         }
     }
 }

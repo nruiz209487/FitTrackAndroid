@@ -14,10 +14,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
-import com.example.fittrack.api.ApiClient
 import com.example.fittrack.database.TrackFitDatabase
+import com.example.fittrack.service.ApiRequest
 import com.example.fittrack.ui.screens.*
 import com.example.fittrack.ui.theme.FitTrackTheme
+import com.example.fittrack.ui.theme_config.ThemePreferences
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -36,24 +37,29 @@ class MainActivity : ComponentActivity() {
         )
             .fallbackToDestructiveMigration(false)
             .build()
+
         lifecycleScope.launch {
-            insertLogsFromApi()
-            insertNotesFromApi()
-            inserRoutinesFromApi()
-            insertExercisesFromApi()
+            ApiRequest.insertLogsFromApi()
+            ApiRequest.insertNotesFromApi()
+            ApiRequest.insertRoutinesFromApi()
+            ApiRequest.insertExercisesFromApi()
+            ApiRequest.insertTargetLocationsFromApi()
+            ApiRequest.insertUserFromApi()
         }
 
         enableEdgeToEdge()
 
         setContent {
-            var isDarkThemeEnabled by remember { mutableStateOf(false) }
-            FitTrackTheme(darkTheme = isDarkThemeEnabled) {
+            val context = this@MainActivity
+            val prefs = remember { ThemePreferences(context) }
+            val scope = rememberCoroutineScope()
+            val isDarkTheme by prefs.darkModeFlow.collectAsState(initial = false)
+
+            FitTrackTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
                 val dao = database.trackFitDao()
 
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                ) { innerPadding ->
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     NavHost(
                         navController = navController,
                         startDestination = "home",
@@ -68,8 +74,10 @@ class MainActivity : ComponentActivity() {
                         composable("settings") {
                             SettingsScreen(
                                 navController = navController,
-                                darkTheme = isDarkThemeEnabled,
-                                onThemeToggle = { isDarkThemeEnabled = it }
+                                darkTheme = isDarkTheme,
+                                onThemeToggle = {
+                                    scope.launch { prefs.saveDarkMode(it) }
+                                }
                             )
                         }
                         composable("login") {
@@ -110,26 +118,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private suspend fun insertLogsFromApi() {
-        val dao = database.trackFitDao()
-        val apiLogs = ApiClient.getExerciseLogs(1)
-        dao.insertExerciseLogs(apiLogs)
-    }
-    private suspend fun insertNotesFromApi() {
-        val dao = database.trackFitDao()
-        val apiNotes = ApiClient.getNotes(1)
-        dao.insertNotes(apiNotes)
-    }
-    private suspend fun inserRoutinesFromApi() {
-        val dao = database.trackFitDao()
-        val apiRoutines = ApiClient.getRoutines(1)
-        dao.insertRoutines(apiRoutines)
-    }
-    private suspend fun insertExercisesFromApi() {
-        val dao = database.trackFitDao()
-        val apiExercises = ApiClient.getExercises()
-        dao.insertExercies(apiExercises)
     }
 }

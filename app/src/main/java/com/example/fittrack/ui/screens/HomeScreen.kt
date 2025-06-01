@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,17 +26,29 @@ import com.example.fittrack.ui.ui_elements.NavBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import com.example.fittrack.R
+import com.example.fittrack.entity.UserEntity
 import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(navController: NavController) {
-    var routines by remember { mutableStateOf<List<RoutineEntity>>(emptyList()) }
+
+    var currentUser by remember { mutableStateOf<UserEntity?>(null) }
+    var allRoutines by remember { mutableStateOf<List<RoutineEntity>>(emptyList()) }
+    var filteredRoutines by remember { mutableStateOf<List<RoutineEntity>>(emptyList()) }
+    var searchQuery by remember { mutableStateOf("") }
+    var routineToDelete by remember { mutableStateOf<RoutineEntity?>(null) }
     val coroutineScope = rememberCoroutineScope()
     val dao = MainActivity.database.trackFitDao()
 
     fun loadRoutines() {
         coroutineScope.launch {
-            routines = dao.getRoutines()
+            allRoutines = dao.getRoutines()
+            filteredRoutines = allRoutines
+            currentUser = dao.getUser()
         }
     }
 
@@ -43,7 +56,24 @@ fun HomeScreen(navController: NavController) {
         loadRoutines()
     }
 
+    LaunchedEffect(searchQuery, allRoutines) {
+        filteredRoutines = if (searchQuery.isBlank()) {
+            allRoutines
+        } else {
+            allRoutines.filter { routine ->
+                routine.name.contains(searchQuery, ignoreCase = true) ||
+                        routine.description.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
+
     Scaffold(
+        topBar = {
+            UserTopBar(
+                user = currentUser,
+                onStreakClick = { navController.navigate("map") } // Ruta para el mapa de rachas
+            )
+        },
         bottomBar = { NavBar(navController = navController) },
         floatingActionButton = {
             FloatingActionButton(
@@ -58,29 +88,152 @@ fun HomeScreen(navController: NavController) {
             }
         }
     ) { innerPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(2.dp)
         ) {
-            RoutineGrid(
-                routines = routines,
-                onItemClick = { routine ->
-                    navController.navigate("routine/${routine.id}")
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                placeholder = { Text("Buscar rutinas...") },
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = "Buscar")
                 },
-                onDeleteRoutine = { routine ->
-                    coroutineScope.launch {
-                        dao.deleteRoutine(routine)
-                        loadRoutines()
-                    }
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            if (filteredRoutines.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (allRoutines.isEmpty()) {
+                            "No hay rutinas disponibles"
+                        } else {
+                            "No se encontraron rutinas con '$searchQuery'"
+                        },
+                        textAlign = TextAlign.Center
+                    )
                 }
+            } else {
+                RoutineGrid(
+                    routines = filteredRoutines,
+                    onItemClick = { routine ->
+                        navController.navigate("routine/${routine.id}")
+                    },
+                    onDeleteRoutine = { routine ->
+                        routineToDelete = routine // Almacenamos la rutina a eliminar
+                    }
+                )
+            }
+        }
+    }
+
+    if (routineToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { routineToDelete = null },
+            title = { Text("Confirmar eliminación") },
+            text = {
+                Column {
+                    Text("¿Estás seguro de que quieres eliminar esta rutina?")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = routineToDelete?.name ?: "",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            routineToDelete?.let { dao.deleteRoutine(it) }
+                            loadRoutines()
+                            routineToDelete = null
+                        }
+                    }
+                ) {
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { routineToDelete = null }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+}
+
+// Nuevo componente para la barra superior de usuario
+@Composable
+fun UserTopBar(user: UserEntity?, onStreakClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        // Foto de perfil pequeña
+        ProfileImage(
+            imageUrl = user?.profileImage ?: "",
+            modifier = Modifier.size(32.dp)
+        )
+
+        // Días de racha (secundario y clickeable)
+        if ((user?.streakDays ?: 0) > 0) {
+            Text(
+                modifier = Modifier
+                    .clickable(onClick = onStreakClick)
+                    .padding(horizontal = 8.dp),
+                text = "${user?.streakDays} 🔥",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary
             )
         }
     }
 }
 
-
+// Modificación en ProfileImage para usar el modificador
+@Composable
+private fun ProfileImage(imageUrl: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    Surface(
+        shape = CircleShape,
+        tonalElevation = 2.dp,
+        modifier = modifier
+    ) {
+        if (imageUrl.isNotEmpty()) {
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Imagen de perfil",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                contentDescription = "Perfil",
+                modifier = Modifier.padding(8.dp)
+            )
+        }
+    }
+}
 
 @Composable
 fun RoutineGrid(

@@ -16,7 +16,7 @@ data class UserEntity(
     @ColumnInfo(name = "email")
     val email: String,
     @ColumnInfo(name = "streak_days")
-    val streakDays: Int? = null,
+    var streakDays: Int? = null,
     @ColumnInfo(name = "profile_image")
     val profileImage: String? = null,
 
