@@ -35,6 +35,7 @@ import com.example.fittrack.service.ApiRequest
 import com.example.fittrack.service.FileUtils
 import kotlinx.coroutines.launch
 import java.io.File
+import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +58,7 @@ fun UserDataScreen(navController: NavController) {
         uri?.let {
             try {
                 val internalPath = FileUtils.copyUriToInternalStorage(context, it)
-                selectedImageUri = Uri.parse(internalPath)
+                selectedImageUri = internalPath.toUri()
                 editedProfileImage = internalPath
             } catch (e: Exception) {
                 errorMessage = "Error al guardar la imagen"
@@ -78,9 +79,9 @@ fun UserDataScreen(navController: NavController) {
                     if (it.profileImage.startsWith("content://")) {
                         val internalPath = FileUtils.copyUriToInternalStorage(
                             context,
-                            Uri.parse(it.profileImage)
+                            it.profileImage.toUri()
                         )
-                        Uri.parse(internalPath)
+                        internalPath.toUri()
                     } else {
                         Uri.fromFile(File(it.profileImage))
                     }
@@ -153,6 +154,7 @@ fun UserDataScreen(navController: NavController) {
                                         email = editedEmail,
                                         profileImage = editedProfileImage
                                     )
+
                                     ApiRequest.updateUserApi(updatedUser)
 
                                     Toast.makeText(

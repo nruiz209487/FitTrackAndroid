@@ -33,6 +33,8 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import kotlin.math.*
 
 
@@ -244,11 +246,21 @@ fun MapPage(navController: NavController) {
 
     if (showSuccessDialog && achievedLocation != null) {
         user?.let {
-            it.streakDays = (it.streakDays ?: 0) + 1
-            scope.launch {
-                ApiRequest.updateUserApi(it)
+            val today = LocalDate.now()
+            val lastStreakDate = it.lastStreakDay.let { dateStr ->
+
+                    LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE)
+
             }
-        }
+
+            if (lastStreakDate != today) {
+                it.streakDays = (it.streakDays ?: 0) + 1
+                it.lastStreakDay = today.toString()
+
+                scope.launch {
+                    ApiRequest.updateUserApi(it)
+                }
+            }
 
         Dialog(
             onDismissRequest = {
@@ -330,5 +342,4 @@ fun MapPage(navController: NavController) {
                 }
             }
         }
-    }
-}
+    }}}

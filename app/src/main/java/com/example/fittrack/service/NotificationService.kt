@@ -20,37 +20,70 @@ class NotificationService : BroadcastReceiver() {
         private const val CHANNEL_ID = "notes_notifications"
         private const val CHANNEL_NAME = "Recordatorios de Notas"
         private const val CHANNEL_DESCRIPTION = "Notificaciones para recordatorios de notas"
+        private const val TAG = "NotificationService"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        // Obtener datos del intent (compatibilidad con el formato anterior)
         val noteId = intent.getIntExtra("note_id", -1)
-        val noteTitle = intent.getStringExtra("note_title") ?: "Recordatorio"
-        val noteContent = intent.getStringExtra("note_content") ?: "Tienes una nota pendiente"
+        val noteTitle = intent.getStringExtra("note_title")
+        val noteContent = intent.getStringExtra("note_content")
 
+        // Obtener datos del nuevo formato
+        val notificationId = intent.getIntExtra("notification_id", noteId)
+        val notificationTitle = intent.getStringExtra("notification_title") ?: noteTitle ?: "Recordatorio"
+        val notificationContent = intent.getStringExtra("notification_content") ?: noteContent ?: "Tienes una nota pendiente"
+
+        // Obtener datos extra
+        val extraData = mutableMapOf<String, String>()
+        intent.extras?.keySet()?.forEach { key ->
+            if (key.startsWith("extra_")) {
+                val value = intent.getStringExtra(key)
+                if (value != null) {
+                    extraData[key.removePrefix("extra_")] = value
+                }
+            }
+        }
+
+        android.util.Log.d(TAG, "Received notification request for ID: $notificationId")
 
         createNotificationChannel(context)
 
         if (!hasNotificationPermission(context)) {
-            android.util.Log.w("NotificationReceiver", "No notification permission, cannot show notification")
+            android.util.Log.w(TAG, "No notification permission, cannot show notification")
             return
         }
 
+        showNotification(context, notificationId, notificationTitle, notificationContent, extraData)
+    }
+
+    private fun showNotification(
+        context: Context,
+        id: Int,
+        title: String,
+        content: String,
+        extraData: Map<String, String>
+    ) {
         val appIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            // Agregar datos extra al intent de la actividad
+            extraData.forEach { (key, value) ->
+                putExtra(key, value)
+            }
         }
 
         val pendingIntent = PendingIntent.getActivity(
             context,
-            noteId,
+            id,
             appIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle(noteTitle)
-            .setContentText(noteContent)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(noteContent))
+            .setContentTitle(title)
+            .setContentText(content)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
@@ -59,18 +92,18 @@ class NotificationService : BroadcastReceiver() {
 
         try {
             val notificationManager = NotificationManagerCompat.from(context)
-            notificationManager.notify(noteId, notification)
-            android.util.Log.d("NotificationReceiver", "Notification shown successfully for note $noteId")
+            notificationManager.notify(id, notification)
+            android.util.Log.d(TAG, "Notification shown successfully for ID $id")
         } catch (e: SecurityException) {
-            android.util.Log.e("NotificationReceiver", "SecurityException showing notification: ${e.message}")
+            android.util.Log.e(TAG, "SecurityException showing notification: ${e.message}")
         } catch (e: Exception) {
-            android.util.Log.e("NotificationReceiver", "Error showing notification: ${e.message}")
+            android.util.Log.e(TAG, "Error showing notification: ${e.message}")
         }
     }
 
     private fun createNotificationChannel(context: Context) {
-
-            val importance = NotificationManager.IMPORTANCE_HIGH // Cambiado a HIGH
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val importance = NotificationManager.IMPORTANCE_HIGH
             val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
                 description = CHANNEL_DESCRIPTION
                 enableLights(true)
@@ -80,7 +113,7 @@ class NotificationService : BroadcastReceiver() {
             val notificationManager: NotificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
-
+        }
     }
 
     private fun hasNotificationPermission(context: Context): Boolean {

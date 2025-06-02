@@ -1,11 +1,7 @@
 package com.example.fittrack.ui.screens
 
 import android.Manifest
-import android.app.AlarmManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.core.content.ContextCompat
 import com.example.fittrack.entity.NoteEntity
 import com.example.fittrack.ui.ui_elements.NavBar
 import com.example.trackfit.database.TrackFitDao
@@ -40,8 +35,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.ui.text.style.TextAlign
-import com.example.fittrack.service.NotificationService
-import java.time.ZoneId
+import com.example.fittrack.ui.ui_elements.NotificationCreator
 
 @Composable
 fun NotesScreen(navController: NavController, dao: TrackFitDao) {
@@ -52,7 +46,6 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
     var hasNotificationPermission by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -74,7 +67,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
 
     LaunchedEffect(Unit) {
         refreshNotes()
-        hasNotificationPermission = checkNotificationPermission(context)
+        hasNotificationPermission = NotificationCreator.hasNotificationPermission(context)
         if (!hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
@@ -87,6 +80,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                 .padding(padding)
                 .padding(16.dp)
         ) {
+            // Botón de permisos solo si es necesario
             if (!hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 Button(
                     onClick = { permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
@@ -97,15 +91,13 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     )
                 ) {
-                    Icon(
-                        Icons.Default.NotificationsOff,
-                        contentDescription = "Permisos faltantes"
-                    )
+                    Icon(Icons.Default.NotificationsOff, contentDescription = "Permisos faltantes")
                     Spacer(Modifier.width(8.dp))
                     Text("Activar notificaciones")
                 }
             }
 
+            // Barra de búsqueda
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -118,6 +110,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
 
             Spacer(Modifier.height(16.dp))
 
+            // Lista de notas
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.weight(1f)
@@ -131,17 +124,10 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                             },
                             onCancel = { showForm = false },
                             onSave = { header, text, notificationDateTime ->
-                                saveNote(
-                                    dao = dao,
-                                    header = header,
-                                    text = text,
-                                    notificationDateTime = notificationDateTime,
-                                    context = context,
-                                    onComplete = {
-                                        showForm = false
-                                        refreshNotes()
-                                    }
-                                )
+                                saveNote(dao, header, text, notificationDateTime, context) {
+                                    showForm = false
+                                    refreshNotes()
+                                }
                             }
                         )
                     }
@@ -169,6 +155,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
 
             Spacer(Modifier.height(16.dp))
 
+            // Botón crear nota
             FilledTonalButton(
                 onClick = { showForm = true },
                 shape = RoundedCornerShape(12.dp),
@@ -189,7 +176,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                 TextButton(
                     onClick = {
                         MainScope().launch {
-                            cancelNotification(context, note.id)
+                            NotificationCreator.cancelNotification(context, note.id)
                             dao.deleteNote(note)
                             refreshNotes()
                             noteToDelete = null
@@ -412,7 +399,7 @@ fun NoteInputForm(
         }
     }
 
-    // DatePicker
+    // DatePicker Dialog
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -434,7 +421,7 @@ fun NoteInputForm(
         }
     }
 
-    // TimePicker
+    // TimePicker Dialog
     if (showTimePicker) {
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
@@ -453,14 +440,6 @@ fun NoteInputForm(
             }
         )
     }
-}
-
-private fun checkNotificationPermission(context: Context): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        ContextCompat.checkSelfPermission(
-            context, Manifest.permission.POST_NOTIFICATIONS
-        ) == PackageManager.PERMISSION_GRANTED
-    } else true
 }
 
 private fun saveNote(
@@ -486,38 +465,23 @@ private fun saveNote(
             val insertedNote = dao.getNotes().find {
                 it.header == header && it.text == text && it.timestamp == timestampString
             }
-            insertedNote?.let { scheduleNotification(context, it, notificationDateTime) }
+            insertedNote?.let {
+                NotificationCreator.scheduleNotification(
+                    context = context,
+                    notificationId = it.id,
+                    title = it.header,
+                    content = it.text,
+                    dateTime = notificationDateTime,
+                    extraData = mapOf(
+                        "note_id" to it.id.toString(),
+                        "screen" to "notes"
+                    )
+                )
+            }
         }
 
         onComplete()
     }
-}
-
-private fun scheduleNotification(context: Context, note: NoteEntity, dateTime: LocalDateTime) {
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    val intent = Intent(context, NotificationService::class.java).apply {
-        putExtra("note_id", note.id)
-        putExtra("note_title", note.header)
-        putExtra("note_content", note.text)
-    }
-
-    val pendingIntent = PendingIntent.getBroadcast(
-        context, note.id, intent,
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-    )
-
-    val triggerTime = dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-    alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
-}
-
-private fun cancelNotification(context: Context, noteId: Int) {
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    val intent = Intent(context, NotificationService::class.java)
-    val pendingIntent = PendingIntent.getBroadcast(
-        context, noteId, intent,
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-    )
-    alarmManager.cancel(pendingIntent)
 }
 
 private fun formatTimestamp(timestamp: String): String {

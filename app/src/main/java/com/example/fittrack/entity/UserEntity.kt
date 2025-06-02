@@ -19,5 +19,5 @@ data class UserEntity(
     var streakDays: Int? = null,
     @ColumnInfo(name = "profile_image")
     val profileImage: String? = null,
-
+    var lastStreakDay: String,
 )

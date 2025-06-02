@@ -39,12 +39,12 @@ class MainActivity : ComponentActivity() {
             .build()
 
         lifecycleScope.launch {
-            ApiRequest.insertLogsFromApi()
-            ApiRequest.insertNotesFromApi()
-            ApiRequest.insertRoutinesFromApi()
-            ApiRequest.insertExercisesFromApi()
-            ApiRequest.insertTargetLocationsFromApi()
-            ApiRequest.insertUserFromApi()
+            //ApiRequest.insertLogsFromApi()
+          //  ApiRequest.insertNotesFromApi()
+           // ApiRequest.insertRoutinesFromApi()
+           // ApiRequest.insertExercisesFromApi()
+          //  ApiRequest.insertTargetLocationsFromApi()
+            //ApiRequest.insertUserFromApi()
         }
 
         enableEdgeToEdge()
