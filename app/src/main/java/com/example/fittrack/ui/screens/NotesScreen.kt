@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,7 +37,9 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.ui.text.style.TextAlign
 import com.example.fittrack.ui.ui_elements.NotificationCreator
+import java.util.Locale
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun NotesScreen(navController: NavController, dao: TrackFitDao) {
     var allNotes by remember { mutableStateOf<List<NoteEntity>>(emptyList()) }
@@ -54,10 +57,23 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
     }
 
     val filteredNotes = remember(searchQuery, allNotes) {
-        if (searchQuery.isBlank()) allNotes
+        val notes = if (searchQuery.isBlank()) allNotes
         else allNotes.filter {
             it.header.contains(searchQuery, true) ||
                     it.text.contains(searchQuery, true)
+        }
+        notes.sortedByDescending { note ->
+            extractDateFromTimestamp(note.timestamp)
+        }
+    }
+
+    val groupedNotes = remember(filteredNotes) {
+        filteredNotes.groupBy { note ->
+            val date = extractDateFromTimestamp(note.timestamp)
+            date.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()))
+                .replaceFirstChar { it.uppercase() }
+        }.toList().sortedByDescending { (_, notes) ->
+            notes.maxOfOrNull { extractDateFromTimestamp(it.timestamp) }
         }
     }
 
@@ -68,7 +84,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
     LaunchedEffect(Unit) {
         refreshNotes()
         hasNotificationPermission = NotificationCreator.hasNotificationPermission(context)
-        if (!hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (!hasNotificationPermission && true) {
             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
@@ -80,8 +96,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // Botón de permisos solo si es necesario
-            if (!hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (!hasNotificationPermission && true) {
                 Button(
                     onClick = { permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
                     modifier = Modifier
@@ -133,7 +148,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                     }
                 }
 
-                if (filteredNotes.isEmpty()) {
+                if (groupedNotes.isEmpty()) {
                     item {
                         Box(
                             modifier = Modifier.fillMaxWidth().padding(32.dp),
@@ -147,15 +162,42 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                         }
                     }
                 } else {
-                    items(filteredNotes) { note ->
-                        NoteCard(note = note, onDelete = { noteToDelete = it })
+                    groupedNotes.forEach { (monthYear, notes) ->
+                        item {
+                            // Cabecera del mes/año
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                                ),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = monthYear,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.SemiBold
+                                        ),
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+
+                        items(notes) { note ->
+                            NoteCard(note = note, onDelete = { noteToDelete = it })
+                        }
                     }
                 }
             }
 
             Spacer(Modifier.height(16.dp))
 
-            // Botón crear nota
             FilledTonalButton(
                 onClick = { showForm = true },
                 shape = RoundedCornerShape(12.dp),
@@ -166,7 +208,6 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
         }
     }
 
-    // Diálogo de eliminación
     noteToDelete?.let { note ->
         AlertDialog(
             onDismissRequest = { noteToDelete = null },
@@ -320,7 +361,6 @@ fun NoteInputForm(
 
             Spacer(Modifier.height(16.dp))
 
-            // Switch de notificación
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -345,7 +385,6 @@ fun NoteInputForm(
                 )
             }
 
-            // Selectores de fecha y hora
             if (enableNotification && hasNotificationPermission) {
                 Spacer(Modifier.height(12.dp))
                 Row(
@@ -399,7 +438,6 @@ fun NoteInputForm(
         }
     }
 
-    // DatePicker Dialog
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -421,7 +459,6 @@ fun NoteInputForm(
         }
     }
 
-    // TimePicker Dialog
     if (showTimePicker) {
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
@@ -430,7 +467,7 @@ fun NoteInputForm(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        selectedTime = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute)
+                        selectedTime = String.format(Locale.getDefault(), "%02d:%02d", timePickerState.hour, timePickerState.minute)
                         showTimePicker = false
                     }
                 ) { Text("OK") }
@@ -439,6 +476,16 @@ fun NoteInputForm(
                 TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") }
             }
         )
+    }
+}
+
+private fun extractDateFromTimestamp(timestamp: String): LocalDate {
+    return if (timestamp.startsWith("NOTIFICATION:")) {
+        val dateTimeString = timestamp.removePrefix("NOTIFICATION:")
+        val dateTime = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        dateTime.toLocalDate()
+    } else {
+        LocalDate.parse(timestamp, DateTimeFormatter.ISO_DATE)
     }
 }
 
@@ -479,7 +526,6 @@ private fun saveNote(
                 )
             }
         }
-
         onComplete()
     }
 }

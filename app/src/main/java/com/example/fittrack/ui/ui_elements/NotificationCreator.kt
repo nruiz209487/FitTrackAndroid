@@ -1,5 +1,6 @@
 package com.example.fittrack.ui.ui_elements
 
+import android.Manifest
 import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,6 +11,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.annotation.DrawableRes
+import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.example.fittrack.R
@@ -23,23 +25,18 @@ object NotificationCreator {
     private const val CHANNEL_ID = "fittrack_notes_channel"
     private const val CHANNEL_NAME = "Recordatorios de Notas"
 
-    /**
-     * Verifica si la aplicación tiene permisos de notificación
-     */
     fun hasNotificationPermission(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
                 context,
-                android.Manifest.permission.POST_NOTIFICATIONS
+               Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         } else {
             NotificationManagerCompat.from(context).areNotificationsEnabled()
         }
     }
 
-    /**
-     * Programa una notificación para una fecha y hora específica
-     */
+    @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
     fun scheduleNotification(
         context: Context,
         notificationId: Int,
@@ -69,7 +66,6 @@ object NotificationCreator {
 
             val triggerTime = dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-            // Verificar que la fecha no sea en el pasado
             if (triggerTime <= System.currentTimeMillis()) {
                 Log.w(TAG, "Cannot schedule notification for past time")
                 return false
@@ -84,9 +80,6 @@ object NotificationCreator {
         }
     }
 
-    /**
-     * Cancela una notificación programada
-     */
     fun cancelNotification(context: Context, notificationId: Int): Boolean {
         return try {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -100,8 +93,6 @@ object NotificationCreator {
 
             alarmManager.cancel(pendingIntent)
             pendingIntent.cancel()
-
-            // También cancela la notificación si ya está siendo mostrada
             val notificationManager = NotificationManagerCompat.from(context)
             notificationManager.cancel(notificationId)
 
@@ -113,11 +104,6 @@ object NotificationCreator {
         }
     }
 
-
-
-    /**
-     * Crea el Intent para la notificación con datos extra
-     */
     private fun createNotificationIntent(
         context: Context,
         notificationId: Int,
@@ -132,31 +118,25 @@ object NotificationCreator {
             putExtra("notification_content", content)
             putExtra("notification_icon", iconRes)
 
-            // Agregar datos extra
             extraData.forEach { (key, value) ->
                 putExtra("extra_$key", value)
             }
         }
     }
 
-    /**
-     * Crea un canal de notificación optimizado
-     */
     private fun createNotificationChannel(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "Recordatorios de notas y eventos"
-                enableLights(true)
-                enableVibration(true)
-                setShowBadge(true)
-            }
-
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            CHANNEL_NAME,
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = "Recordatorios de notas y eventos"
+            enableLights(true)
+            enableVibration(true)
+            setShowBadge(true)
         }
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
     }
 }

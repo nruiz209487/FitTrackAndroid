@@ -15,7 +15,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.example.fittrack.database.TrackFitDatabase
-import com.example.fittrack.service.ApiRequest
 import com.example.fittrack.ui.screens.*
 import com.example.fittrack.ui.theme.FitTrackTheme
 import com.example.fittrack.ui.theme_config.ThemePreferences
@@ -40,10 +39,10 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             //ApiRequest.insertLogsFromApi()
-          //  ApiRequest.insertNotesFromApi()
-           // ApiRequest.insertRoutinesFromApi()
-           // ApiRequest.insertExercisesFromApi()
-          //  ApiRequest.insertTargetLocationsFromApi()
+            //ApiRequest.insertNotesFromApi()
+            //ApiRequest.insertRoutinesFromApi()
+            //ApiRequest.insertExercisesFromApi()
+            //ApiRequest.insertTargetLocationsFromApi()
             //ApiRequest.insertUserFromApi()
         }
 

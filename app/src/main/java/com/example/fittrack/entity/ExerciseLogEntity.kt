@@ -11,6 +11,5 @@ data class ExerciseLogEntity(
     val date: String,
     val weight: Float,
     val reps: Int,
-    val user_id: String = ""
-
+    val userId: String = ""
 )
