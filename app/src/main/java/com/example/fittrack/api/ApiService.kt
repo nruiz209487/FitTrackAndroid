@@ -1,20 +1,21 @@
 package com.example.fittrack.api
-
+import com.example.fittrack.api.Request.RegisterUserResponse
+import com.example.fittrack.api.Request.UserRegistrationRequest
 import com.example.fittrack.entity.*
+
 import retrofit2.Response
 import retrofit2.http.*
 
 interface ApiService {
 
-    @POST("/api/user/register")
-    suspend fun registerUser(@Body user: UserEntity): Response<UserEntity>
 
     @GET("/api/user/token/{id}")
     suspend fun getUserToken(@Path("id") userId: Int): Response<UserEntity>
 
     @GET("/api/exercises")
     suspend fun getExercises(): Response<List<ExerciseEntity>>
-
+    @POST("/api/user/register")
+    suspend fun registerUser(@Body user: UserRegistrationRequest): Response<RegisterUserResponse>
     @GET("/api/targetlocations")
     suspend fun getTargetLocations(): Response<List<TargetLocationEntity>>
 

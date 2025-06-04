@@ -1,5 +1,6 @@
 package com.example.fittrack
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.example.fittrack.database.TrackFitDatabase
+import com.example.fittrack.service.Service
 import com.example.fittrack.ui.screens.*
 import com.example.fittrack.ui.theme.FitTrackTheme
 import com.example.fittrack.ui.theme_config.ThemePreferences
@@ -38,12 +40,12 @@ class MainActivity : ComponentActivity() {
             .build()
 
         lifecycleScope.launch {
-            //ApiRequest.insertLogsFromApi()
-            //ApiRequest.insertNotesFromApi()
-            //ApiRequest.insertRoutinesFromApi()
-            //ApiRequest.insertExercisesFromApi()
-            //ApiRequest.insertTargetLocationsFromApi()
-            //ApiRequest.insertUserFromApi()
+            //Service.insertLogsFromApi()
+            //Service.insertNotesFromApi()
+            //Service.insertRoutinesFromApi()
+            Service.insertExercisesFromApi()
+            //Service.insertTargetLocationsFromApi()
+            Service.insertUserFromApi()
         }
 
         enableEdgeToEdge()
@@ -105,7 +107,9 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("notes") {
-                            NotesScreen(navController, dao)
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                NotesScreen(navController, dao)
+                            }
                         }
                         composable("create_routine") {
                             CreateRoutinePage(navController)
@@ -118,4 +122,5 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 }

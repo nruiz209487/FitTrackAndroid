@@ -31,7 +31,7 @@ import coil.request.ImageRequest
 import com.example.fittrack.MainActivity
 import com.example.fittrack.R
 import com.example.fittrack.entity.UserEntity
-import com.example.fittrack.service.ApiRequest
+import com.example.fittrack.service.Service
 import com.example.fittrack.service.FileUtils
 import kotlinx.coroutines.launch
 import java.io.File
@@ -155,7 +155,7 @@ fun UserDataScreen(navController: NavController) {
                                         profileImage = editedProfileImage
                                     )
 
-                                    ApiRequest.updateUserApi(updatedUser)
+                                    Service.updateUserApi(updatedUser)
 
                                     Toast.makeText(
                                         context,

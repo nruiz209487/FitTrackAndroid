@@ -22,7 +22,7 @@ import androidx.navigation.NavController
 import com.example.fittrack.MainActivity
 import com.example.fittrack.entity.TargetLocationEntity
 import com.example.fittrack.entity.UserEntity
-import com.example.fittrack.service.ApiRequest
+import com.example.fittrack.service.Service
 import com.example.fittrack.ui.ui_elements.NavBar
 import com.google.accompanist.permissions.*
 import com.google.android.gms.location.LocationServices
@@ -258,7 +258,7 @@ fun MapPage(navController: NavController) {
                 it.lastStreakDay = today.toString()
 
                 scope.launch {
-                    ApiRequest.updateUserApi(it)
+                    Service.updateUserApi(it)
                 }
             }
 

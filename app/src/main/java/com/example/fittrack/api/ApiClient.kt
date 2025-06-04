@@ -1,13 +1,15 @@
 package com.example.fittrack.api
 
+import com.example.fittrack.api.Request.RegisterUserResponse
+import com.example.fittrack.api.Request.UserRegistrationRequest
 import com.example.fittrack.entity.*
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-object ApiClient : ApiRoutes {
-    private const val BASE_URL = "https://f7d0-46-6-130-69.ngrok-free.app/"
+object ApiClient  {
+    private const val BASE_URL = "http://10.0.2.2:8000/"
 
     private val retrofitService: ApiService by lazy {
         getRetrofit().create(ApiService::class.java)
@@ -25,32 +27,41 @@ object ApiClient : ApiRoutes {
             .build()
     }
 
-    override suspend fun getExercises(): List<ExerciseEntity> {
+     suspend fun getExercises(): List<ExerciseEntity> {
         val response = retrofitService.getExercises()
         return response.body().orEmpty()
    }
 
-    override suspend fun getTargetLocations(): List<TargetLocationEntity> {
+     suspend fun getTargetLocations(): List<TargetLocationEntity> {
         val response = retrofitService.getTargetLocations()
         return response.body().orEmpty()
     }
-    override suspend fun getRoutines(userId: Int): List<RoutineEntity> {
+     suspend fun getRoutines(userId: Int): List<RoutineEntity> {
         val response = retrofitService.getRoutines(userId)
         return response.body().orEmpty()
     }
 
-    override suspend fun getUser(userId: Int): UserEntity? {
+     suspend fun getUser(userId: Int): UserEntity? {
         val response = retrofitService.getUserToken(userId)
         return response.body()
     }
 
-    override suspend fun getNotes(userId: Int): List<NoteEntity> {
+     suspend fun getNotes(userId: Int): List<NoteEntity> {
         val response = retrofitService.getNotes(userId)
         return response.body().orEmpty()
     }
 
-    override suspend fun getExerciseLogs(userId: Int): List<ExerciseLogEntity> {
+     suspend fun getExerciseLogs(userId: Int): List<ExerciseLogEntity> {
         val response = retrofitService.getExerciseLogs(userId)
         return response.body().orEmpty()
+    }
+
+    suspend fun registerUser(user: UserRegistrationRequest): RegisterUserResponse {
+        val response = retrofitService.registerUser(user)
+        if (response.isSuccessful) {
+            return response.body() ?: throw Exception("Empty response body")
+        } else {
+            throw Exception("Registration failed: ${response.errorBody()?.string()}")
+        }
     }
 }
