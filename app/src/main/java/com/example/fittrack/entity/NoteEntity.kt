@@ -10,5 +10,5 @@ data class NoteEntity(
     val header: String,
     val text: String,
     val timestamp: String,
-    val userId: String = ""
+    val userId: Int = 0
 )

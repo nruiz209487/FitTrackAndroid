@@ -15,6 +15,82 @@ object ApiClient  {
     private val retrofitService: ApiService by lazy {
         getRetrofit().create(ApiService::class.java)
     }
+    suspend fun registerUser(user: UserRegistrationRequest): RegisterUserResponse {
+        val response = retrofitService.registerUser(user)
+        if (response.isSuccessful) {
+            return response.body() ?: throw Exception("Empty response body")
+        } else {
+            throw Exception("Registration failed: ${response.errorBody()?.string()}")
+        }
+    }
+    suspend fun insertTargetLocation(userId: Int, testLocation: Request.TargetLocationRequest): Any {
+        val response = retrofitService.insertTargetLocation(userId,testLocation)
+        if (response.isSuccessful) {
+            return response.body() ?: throw Exception("Empty response body")
+        } else {
+            throw Exception("Registration failed: ${response.errorBody()?.string()}")
+        }
+    }
+
+    // Nueva función para insertar rutina
+    suspend fun insertRoutine(routine: RoutineEntity, userId: Int): RoutineEntity {
+        val response = retrofitService.insertRoutine(userId, routine)
+        if (response.isSuccessful) {
+            return response.body() ?: throw Exception("Empty response body")
+        } else {
+            throw Exception("Insert routine failed: ${response.errorBody()?.string()}")
+        }
+    }
+
+    suspend fun deleteRoutine(routineId: Int, userId: Int): Any? {
+        val response = retrofitService.deleteRoutine(userId, routineId)
+        return if (response.isSuccessful) {
+            println("Rutina eliminada exitosamente")
+            response.body()
+        } else {
+            println("Error al eliminar rutina: ${response.errorBody()?.string()}")
+            null
+        }
+    }
+    suspend fun deleteNote(noteId: Int, userId: Int): Any? {
+        val response = retrofitService.deleteNote(userId, noteId)
+        return if (response.isSuccessful) {
+            println("Nota eliminada exitosamente")
+            response.body()
+        } else {
+            println("Error al eliminar rutina: ${response.errorBody()?.string()}")
+            null
+        }
+    }
+
+    suspend fun deleteExeciseLog(exerciseLogId: Int, idUser: Int): Any? {
+        val response = retrofitService.deleteExeciseLog(idUser, exerciseLogId)
+        return if (response.isSuccessful) {
+            println("Nota eliminada exitosamente")
+            response.body()
+        } else {
+            println("Error al eliminar rutina: ${response.errorBody()?.string()}")
+            null
+        }
+    }
+
+    suspend fun insertExerciseLog(testExerciseLog: ExerciseLogEntity, userId: Int): Any {
+        val response = retrofitService.insertExerciseLog(userId, testExerciseLog)
+        if (response.isSuccessful) {
+            return response.body() ?: throw Exception("Empty response body")
+        } else {
+            throw Exception("Insert routine failed: ${response.errorBody()?.string()}")
+        }
+    }
+
+    suspend   fun insertNote(testNote: NoteEntity, userId: Int): Any {
+        val response = retrofitService.insertNote(userId, testNote)
+        if (response.isSuccessful) {
+            return response.body() ?: throw Exception("Empty response body")
+        } else {
+            throw Exception("Insert routine failed: ${response.errorBody()?.string()}")
+        }
+    }
     suspend fun getUser(userEmail: String): Request.UserByEmailResponse? {
         return try {
             val response = retrofitService.getUserByEmail(userEmail)
@@ -60,12 +136,8 @@ object ApiClient  {
         val response = retrofitService.getExerciseLogs(userId)
         return response.body().orEmpty()
     }
-    suspend fun registerUser(user: UserRegistrationRequest): RegisterUserResponse {
-        val response = retrofitService.registerUser(user)
-        if (response.isSuccessful) {
-            return response.body() ?: throw Exception("Empty response body")
-        } else {
-            throw Exception("Registration failed: ${response.errorBody()?.string()}")
-        }
-    }
+
+
+
+
 }

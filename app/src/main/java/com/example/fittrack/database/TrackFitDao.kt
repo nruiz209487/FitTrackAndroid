@@ -58,4 +58,6 @@ interface TrackFitDao {
     suspend fun getTargetLocations(): List<TargetLocationEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTargetLocations(targetLocations: List<TargetLocationEntity>)
+    @Delete
+    suspend fun deleteTargetLocation(targetLocations: TargetLocationEntity)
 }

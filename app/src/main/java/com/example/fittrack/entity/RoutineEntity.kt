@@ -11,5 +11,5 @@ data class RoutineEntity(
     val description: String = "",
     val imageUri: String = "",
     val exerciseIds: String = "",
-    val userId: String = ""
+    val userId: Int = 0
 )

@@ -217,7 +217,20 @@ private fun ActionButtonsSection(navController: NavController) {
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = "Actualizar datos", fontWeight = FontWeight.Medium)
         }
-
+        FilledTonalButton(
+            onClick = { navController.navigate("targetLocation") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ),
+            elevation = ButtonDefaults.filledTonalButtonElevation(defaultElevation = 4.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Nuevo gimnasio")
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "Nuevo gimnasio", fontWeight = FontWeight.Medium)
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)

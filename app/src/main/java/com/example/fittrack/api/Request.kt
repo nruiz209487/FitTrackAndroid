@@ -30,4 +30,11 @@ class Request {
         val name: String,
         val token: String
     )
+    data class TargetLocationRequest(
+        val name: String,
+        val position: String, // formato "lat,lng"
+        val radiusMeters: Double
+    )
+
+
 }

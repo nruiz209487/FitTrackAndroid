@@ -7,7 +7,7 @@ import com.google.android.gms.maps.model.LatLng
 @Entity(tableName = "target_location_table")
 data class TargetLocationEntity(
     @PrimaryKey(autoGenerate = true)
-    val id: Int,
+    val id: Int = 0, // valor por defecto para que Room lo genere automáticamente
     val name: String,
     val position: LatLng,
     val radiusMeters: Double = 200.0
