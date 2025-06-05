@@ -5,7 +5,6 @@ class Request {
         val token: String,
         val user: UserDetails
     )
-
     data class UserDetails(
         val user_id: Int,
         val email: String,
@@ -25,13 +24,10 @@ class Request {
         val message: String,
         val data: UserData
     )
-
     data class UserData(
         val user_id: Int,
         val email: String,
         val name: String,
         val token: String
     )
-
-
 }

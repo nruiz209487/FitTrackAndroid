@@ -2,7 +2,6 @@ package com.example.fittrack
 
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -24,7 +23,6 @@ import com.example.fittrack.ui.theme.FitTrackTheme
 import com.example.fittrack.ui.theme_config.ThemePreferences
 import kotlinx.coroutines.launch
 
-// MainActivity.kt
 class MainActivity : ComponentActivity() {
 
     companion object {
@@ -33,36 +31,31 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         database = Room.databaseBuilder(
             applicationContext,
             TrackFitDatabase::class.java,
-            "trackfit-db"
-        )
+            "trackfit-db")
             .fallbackToDestructiveMigration(false)
             .build()
+        val testUser = UserEntity(
+            name = "Usuario Prueba",
+            email = "prueba@example.com",
+            streakDays = 1,
+            profileImage = "https://example.com/avatar.png",
+            lastStreakDay = "2025-06-05",
+            password = "123456"
+        )
+        val dao = database.trackFitDao()
 
         lifecycleScope.launch {
-            try {
                 Service.insertLogsFromApi()
                 Service.insertNotesFromApi()
                 Service.insertRoutinesFromApi()
                 Service.insertExercisesFromApi()
-                //Service.login()
-                val testUser = UserEntity(
-                    name = "Usuario Prueba",
-                    email = "prueba@example.com",
-                    streakDays = 5,
-                    profileImage = "https://example.com/avatar.png",
-                    lastStreakDay = "2025-06-05",
-                    password = "123456"
-                )
-
+                Service.insertTargetLocationsFromApi()
                 Service.insertUserToApi(testUser)
-            } catch (e: Exception) {
-                Log.e("MAIN_ACTIVITY", "Error en inicialización: ${e.message}")
-                e.printStackTrace()
-            }
+                Service.login()
+                dao.insertUser(testUser)
         }
 
         enableEdgeToEdge()
@@ -75,12 +68,10 @@ class MainActivity : ComponentActivity() {
 
             FitTrackTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
-                val dao = database.trackFitDao()
-
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = "home",
+                        startDestination = "IMCScreen",
                         modifier = Modifier.padding(innerPadding)
                     ) {
                         composable("home") {
@@ -131,6 +122,9 @@ class MainActivity : ComponentActivity() {
                         composable("create_routine") {
                             CreateRoutinePage(navController)
                         }
+                        composable("IMCScreen") {
+                            IMCScreen(navController)
+                        }
                         composable("map") {
                             MapPage(navController)
                         }
@@ -139,5 +133,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
 }

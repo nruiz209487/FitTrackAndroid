@@ -8,15 +8,16 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface ApiService {
-
-
     @GET("/api/user/{email}")
-    suspend fun getUserByEmail(@Path("email") email: String): Response<Request.UserByEmailResponse>
+    suspend fun getUserByEmail(@Path("email") email: String): Response<UserByEmailResponse>
+
     @GET("/api/exercises")
     suspend fun getExercises(): Response<List<ExerciseEntity>>
+
     @POST("/api/user/register")
     suspend fun registerUser(@Body user: UserRegistrationRequest): Response<RegisterUserResponse>
-    @GET("/api/targetlocations")
+
+    @GET("/api/target-locations")
     suspend fun getTargetLocations(): Response<List<TargetLocationEntity>>
 
     @GET("/api/users/{id}/routines")

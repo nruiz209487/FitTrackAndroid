@@ -14,7 +14,7 @@ import com.example.trackfit.database.TrackFitDao
 
 @Database(
     entities = [ExerciseLogEntity::class , NoteEntity::class , RoutineEntity::class , ExerciseEntity::class , UserEntity::class, TargetLocationEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(LatLngConverter::class)

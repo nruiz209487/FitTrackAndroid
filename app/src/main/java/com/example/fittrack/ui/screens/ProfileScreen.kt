@@ -6,9 +6,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,7 +24,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
@@ -35,53 +36,76 @@ import com.example.fittrack.ui.ui_elements.NavBar
 fun ProfileScreen(navController: NavController) {
     var user by remember { mutableStateOf<UserEntity?>(null) }
     val dao = MainActivity.database.trackFitDao()
+
     LaunchedEffect(Unit) {
         user = dao.getUser()
     }
 
     Scaffold(
-        bottomBar = { NavBar(navController = navController) }) { innerPadding ->
+        bottomBar = { NavBar(navController = navController) }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(innerPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            user?.let {
-                ProfileHeader(user = it)
-                UserMetricsSection(user = it)
-            } ?: CircularProgressIndicator()
+            ProfileHeaderSection(user = user)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (user != null) {
+                UserMetricsSection(user = user!!)
+                Spacer(modifier = Modifier.height(16.dp))
+            } else {
+                CircularProgressIndicator(modifier = Modifier.padding(24.dp))
+            }
 
             ActionButtonsSection(navController)
         }
     }
 }
 
-
 @Composable
-private fun ProfileHeader(user: UserEntity) {
+private fun ProfileHeaderSection(user: UserEntity?) {
     Card(
-        shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ), elevation = CardDefaults.cardElevation(4.dp)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(10.dp)
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(24.dp)
         ) {
             ProfileImage(
-                imageUrl = user.profileImage ?: "iamgenBasica.jpg", modifier = Modifier.size(120.dp)
+                imageUrl = user?.profileImage ?: "imagenBasica.jpg",
+                modifier = Modifier.size(120.dp).align(Alignment.CenterHorizontally)
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = user.name ?: "Iniciar Sesion",
+                text = user?.name ?: "Invitado",
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.Bold
             )
+
+            if (user?.email != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = user.email,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -89,45 +113,81 @@ private fun ProfileHeader(user: UserEntity) {
 @Composable
 private fun ProfileImage(imageUrl: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    Surface(
-        shape = CircleShape, tonalElevation = 4.dp, modifier = modifier
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
     ) {
-        AsyncImage(
-            model = ImageRequest.Builder(context).data(imageUrl).crossfade(true).build(),
-            contentDescription = "Imagen de perfil",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.clip(CircleShape)
-        )
+        Surface(
+            shape = CircleShape,
+            tonalElevation = 8.dp,
+            shadowElevation = 8.dp,
+            modifier = Modifier.matchParentSize()
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Imagen de perfil",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .fillMaxSize()
+            )
+        }
     }
 }
 
 @Composable
 private fun UserMetricsSection(user: UserEntity) {
     val metrics = listOf(
-        "Racha: ${user.streakDays} días" to Icons.Default.DateRange
+        MetricData("Racha actual", "${user.streakDays} días", Icons.Default.DateRange),
     )
-    metrics.forEach { (text, icon) ->
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        metrics.forEach { metric ->
+            MetricCard(metric = metric)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun MetricCard(metric: MetricData) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
         ) {
-            Row(
-                modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(16.dp))
+            Icon(
+                imageVector = metric.icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
                 Text(
-                    text = text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text = metric.title,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = metric.value,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
@@ -137,51 +197,89 @@ private fun UserMetricsSection(user: UserEntity) {
 @Composable
 private fun ActionButtonsSection(navController: NavController) {
     Column(
-        modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         FilledTonalButton(
             onClick = { navController.navigate("user_data") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ),
+            elevation = ButtonDefaults.filledTonalButtonElevation(defaultElevation = 4.dp)
         ) {
-            Icon(Icons.Default.Add, contentDescription = null)
+            Icon(Icons.Default.Add, contentDescription = "Actualizar datos")
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Actualizar datos")
+            Text(text = "Actualizar datos", fontWeight = FontWeight.Medium)
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
-
         Row(
-            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            FilledTonalButton(
+            ActionButton(
                 onClick = { navController.navigate("settings") },
+                icon = Icons.Default.Settings,
+                text = "Ajustes",
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                Icon(Icons.Default.Settings, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Configuración")
-            }
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
+            )
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            FilledTonalButton(
-                onClick = { navController.navigate("login") },
+            ActionButton(
+                onClick = { navController.navigate("IMCScreen") },
+                icon = Icons.Default.MonitorWeight,
+                text = "IMC",
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Text(text = "Cerrar Sesión", textAlign = TextAlign.Center)
-            }
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            )
+        }
+        OutlinedButton(
+            onClick = { navController.navigate("login") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.error
+            ),
+            border = ButtonDefaults.outlinedButtonBorder.copy(
+                width = 1.dp,   )
+        ) {
+            Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Cerrar sesión")
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "Cerrar sesión", fontWeight = FontWeight.Medium)
         }
     }
 }
+
+@Composable
+private fun ActionButton(
+    onClick: () -> Unit,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    modifier: Modifier = Modifier,
+    containerColor: androidx.compose.ui.graphics.Color
+) {
+    FilledTonalButton(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = containerColor
+        ),
+        elevation = ButtonDefaults.filledTonalButtonElevation(defaultElevation = 4.dp)
+    ) {
+        Icon(icon, contentDescription = text)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = text, fontWeight = FontWeight.Medium)
+    }
+}
+
+data class MetricData(
+    val title: String,
+    val value: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
+)

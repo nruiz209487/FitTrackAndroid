@@ -10,7 +10,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient  {
-    private const val BASE_URL = "http://10.0.2.2:8000/"
+    private const val BASE_URL = "http://10.0.2.2:8000"
 
     private val retrofitService: ApiService by lazy {
         getRetrofit().create(ApiService::class.java)
@@ -40,12 +40,10 @@ object ApiClient  {
             .client(httpClient.build())
             .build()
     }
-
      suspend fun getExercises(): List<ExerciseEntity> {
         val response = retrofitService.getExercises()
         return response.body().orEmpty()
    }
-
      suspend fun getTargetLocations(): List<TargetLocationEntity> {
         val response = retrofitService.getTargetLocations()
         return response.body().orEmpty()
@@ -54,19 +52,14 @@ object ApiClient  {
         val response = retrofitService.getRoutines(userId)
         return response.body().orEmpty()
     }
-
-
-
      suspend fun getNotes(userId: Int): List<NoteEntity> {
         val response = retrofitService.getNotes(userId)
         return response.body().orEmpty()
     }
-
      suspend fun getExerciseLogs(userId: Int): List<ExerciseLogEntity> {
         val response = retrofitService.getExerciseLogs(userId)
         return response.body().orEmpty()
     }
-
     suspend fun registerUser(user: UserRegistrationRequest): RegisterUserResponse {
         val response = retrofitService.registerUser(user)
         if (response.isSuccessful) {

@@ -20,7 +20,6 @@ interface TrackFitDao {
     suspend fun getExerciseLogsById(exerciseId: Int): List<ExerciseLogEntity>
     @Delete
     suspend fun deleteExerciseLogs(exerciseLogs: ExerciseLogEntity)
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNotes(notes: List<NoteEntity>)
     @Insert
@@ -29,7 +28,6 @@ interface TrackFitDao {
     suspend fun deleteNote(note: NoteEntity)
     @Query("SELECT * FROM note_table ")
     suspend fun getNotes(): List<NoteEntity>
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRoutines(routine: List<RoutineEntity>)
     @Insert
@@ -38,7 +36,6 @@ interface TrackFitDao {
     suspend fun deleteRoutine(routine: RoutineEntity)
     @Query("SELECT * FROM routine_table ")
     suspend fun getRoutines(): List<RoutineEntity>
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExercies(routine: List<ExerciseEntity>)
     @Insert
@@ -49,27 +46,16 @@ interface TrackFitDao {
     suspend fun getExercises(): List<ExerciseEntity>
     @Query("SELECT * FROM exercise_table WHERE id IN (:ids)")
     suspend fun getExercisesByIds(ids: List<Int>): List<ExerciseEntity>
-
-
-
     @Query("SELECT * FROM users WHERE id = :userId")
     suspend fun getUserById(userId: Int): UserEntity?
-
     @Query("SELECT * FROM users LIMIT 1")
     suspend fun getUser(): UserEntity?
-
-
-
     @Update
     suspend fun updateUser(user: UserEntity)
-
     @Delete
     suspend fun deleteUser(user: UserEntity)
-
-
     @Query("SELECT * FROM target_location_table ")
     suspend fun getTargetLocations(): List<TargetLocationEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTargetLocations(targetLocations: List<TargetLocationEntity>)
-
 }

@@ -71,7 +71,7 @@ fun HomeScreen(navController: NavController) {
         topBar = {
             UserTopBar(
                 user = currentUser,
-                onStreakClick = { navController.navigate("map") } // Ruta para el mapa de rachas
+                onStreakClick = { navController.navigate("map") }
             )
         },
         bottomBar = { NavBar(navController = navController) },
@@ -129,7 +129,7 @@ fun HomeScreen(navController: NavController) {
                         navController.navigate("routine/${routine.id}")
                     },
                     onDeleteRoutine = { routine ->
-                        routineToDelete = routine // Almacenamos la rutina a eliminar
+                        routineToDelete = routine
                     }
                 )
             }
@@ -176,7 +176,6 @@ fun HomeScreen(navController: NavController) {
     }
 }
 
-// Nuevo componente para la barra superior de usuario
 @Composable
 fun UserTopBar(user: UserEntity?, onStreakClick: () -> Unit) {
     Row(
@@ -186,13 +185,10 @@ fun UserTopBar(user: UserEntity?, onStreakClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // Foto de perfil pequeña
         ProfileImage(
             imageUrl = user?.profileImage ?: "",
             modifier = Modifier.size(32.dp)
         )
-
-        // Días de racha (secundario y clickeable)
         if ((user?.streakDays ?: 0) > 0) {
             Text(
                 modifier = Modifier
@@ -206,7 +202,6 @@ fun UserTopBar(user: UserEntity?, onStreakClick: () -> Unit) {
     }
 }
 
-// Modificación en ProfileImage para usar el modificador
 @Composable
 private fun ProfileImage(imageUrl: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
