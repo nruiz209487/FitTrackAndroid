@@ -2,6 +2,7 @@ package com.example.fittrack
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,12 +17,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.example.fittrack.database.TrackFitDatabase
+import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.service.Service
 import com.example.fittrack.ui.screens.*
 import com.example.fittrack.ui.theme.FitTrackTheme
 import com.example.fittrack.ui.theme_config.ThemePreferences
 import kotlinx.coroutines.launch
 
+// MainActivity.kt
 class MainActivity : ComponentActivity() {
 
     companion object {
@@ -40,12 +43,26 @@ class MainActivity : ComponentActivity() {
             .build()
 
         lifecycleScope.launch {
-            //Service.insertLogsFromApi()
-            //Service.insertNotesFromApi()
-            //Service.insertRoutinesFromApi()
-            Service.insertExercisesFromApi()
-            //Service.insertTargetLocationsFromApi()
-            Service.insertUserFromApi()
+            try {
+                Service.insertLogsFromApi()
+                Service.insertNotesFromApi()
+                Service.insertRoutinesFromApi()
+                Service.insertExercisesFromApi()
+                //Service.login()
+                val testUser = UserEntity(
+                    name = "Usuario Prueba",
+                    email = "prueba@example.com",
+                    streakDays = 5,
+                    profileImage = "https://example.com/avatar.png",
+                    lastStreakDay = "2025-06-05",
+                    password = "123456"
+                )
+
+                Service.insertUserToApi(testUser)
+            } catch (e: Exception) {
+                Log.e("MAIN_ACTIVITY", "Error en inicialización: ${e.message}")
+                e.printStackTrace()
+            }
         }
 
         enableEdgeToEdge()

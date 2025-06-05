@@ -10,6 +10,8 @@ import com.example.fittrack.entity.UserEntity
 
 @Dao
 interface TrackFitDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUser(user: UserEntity)
     @Insert
     suspend fun insertExerciseLog(exerciseLog: ExerciseLogEntity)
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -56,8 +58,7 @@ interface TrackFitDao {
     @Query("SELECT * FROM users LIMIT 1")
     suspend fun getUser(): UserEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertUser(user: UserEntity)
+
 
     @Update
     suspend fun updateUser(user: UserEntity)

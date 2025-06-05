@@ -20,4 +20,7 @@ data class UserEntity(
     @ColumnInfo(name = "profile_image")
     val profileImage: String? = null,
     var lastStreakDay: String,
+    var password: String,
+
+
 )

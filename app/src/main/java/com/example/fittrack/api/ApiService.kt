@@ -1,5 +1,6 @@
 package com.example.fittrack.api
 import com.example.fittrack.api.Request.RegisterUserResponse
+import com.example.fittrack.api.Request.UserByEmailResponse
 import com.example.fittrack.api.Request.UserRegistrationRequest
 import com.example.fittrack.entity.*
 
@@ -9,9 +10,8 @@ import retrofit2.http.*
 interface ApiService {
 
 
-    @GET("/api/user/token/{id}")
-    suspend fun getUserToken(@Path("id") userId: Int): Response<UserEntity>
-
+    @GET("/api/user/{email}")
+    suspend fun getUserByEmail(@Path("email") email: String): Response<Request.UserByEmailResponse>
     @GET("/api/exercises")
     suspend fun getExercises(): Response<List<ExerciseEntity>>
     @POST("/api/user/register")

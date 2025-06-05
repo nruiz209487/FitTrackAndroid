@@ -44,6 +44,8 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/my_map_api_key" />
-
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
     </application>
 </manifest>

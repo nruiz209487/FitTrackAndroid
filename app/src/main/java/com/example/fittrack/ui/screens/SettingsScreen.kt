@@ -26,6 +26,7 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.Top
         ) {
             Text(text = "Ajustes de la aplicación", style = MaterialTheme.typography.titleLarge)
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Row(

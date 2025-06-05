@@ -1,5 +1,6 @@
 package com.example.fittrack.api
 
+import android.util.Log
 import com.example.fittrack.api.Request.RegisterUserResponse
 import com.example.fittrack.api.Request.UserRegistrationRequest
 import com.example.fittrack.entity.*
@@ -14,7 +15,20 @@ object ApiClient  {
     private val retrofitService: ApiService by lazy {
         getRetrofit().create(ApiService::class.java)
     }
-
+    suspend fun getUser(userEmail: String): Request.UserByEmailResponse? {
+        return try {
+            val response = retrofitService.getUserByEmail(userEmail)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e("API_CLIENT", "Error al obtener usuario: ${response.code()} - ${response.message()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("API_CLIENT", "Excepción al obtener usuario: ${e.message}")
+            null
+        }
+    }
     private fun getRetrofit(): Retrofit {
         val logging = HttpLoggingInterceptor()
         logging.level = HttpLoggingInterceptor.Level.BODY
@@ -41,10 +55,7 @@ object ApiClient  {
         return response.body().orEmpty()
     }
 
-     suspend fun getUser(userId: Int): UserEntity? {
-        val response = retrofitService.getUserToken(userId)
-        return response.body()
-    }
+
 
      suspend fun getNotes(userId: Int): List<NoteEntity> {
         val response = retrofitService.getNotes(userId)
