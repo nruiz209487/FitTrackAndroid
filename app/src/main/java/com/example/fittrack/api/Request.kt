@@ -10,13 +10,21 @@ class Request {
         val email: String,
         val name: String,
         val streak_days: Int?,
-        val profile_image: String?
+        val profile_image: String?,
+        var lastStreakDay: String,
+        val gender: String?,
+        val height: Double?,
+        val weight: Double?
     )
+
     data class UserRegistrationRequest(
         val email: String,
         val password: String,
         val password_confirmation: String,
-        val name: String?
+        val name: String?,
+        val gender: String?,
+        val height: Double?,
+        val weight: Double?
     )
 
     data class RegisterUserResponse(

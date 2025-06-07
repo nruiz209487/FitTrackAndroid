@@ -68,7 +68,10 @@ object Service {
                         email = userEntity.email,
                         password = userEntity.password,
                         password_confirmation = userEntity.password,
-                        name = userEntity.name
+                        name = userEntity.name,
+                        gender = userEntity.gender,
+                        height = userEntity.height,
+                        weight = userEntity.weight,
                     )
 
                     val response = ApiClient.registerUser(testUser)

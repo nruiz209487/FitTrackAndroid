@@ -49,7 +49,11 @@ class MainActivity : ComponentActivity() {
             profileImage = "https://example.com/avatar.png",
             lastStreakDay = "2025-06-05",
             password = "password123",
+            gender = "male",
+            height = 175.5,
+            weight = 75.0
         )
+
         val testRoutine = RoutineEntity(
             name = "Rutina de prueba",
             description = "Descripción de la rutina de prueba",
@@ -79,12 +83,12 @@ class MainActivity : ComponentActivity() {
         val dao = database.trackFitDao()
 
         lifecycleScope.launch {
-           //    Service.insertLogsFromApi()
-         //    Service.insertNotesFromApi()
-         //   Service.insertRoutinesFromApi()
-        //     Service.insertExercisesFromApi()
-        //    Service.insertTargetLocationsFromApi()
-         //    Service.insertUserToApi(testUser)
+//Service.insertLogsFromApi()
+           //  Service.insertNotesFromApi()
+         //  Service.insertRoutinesFromApi()
+         //  Service.insertExercisesFromApi()
+       //   Service.insertTargetLocationsFromApi()
+         //   Service.insertUserToApi(testUser)
          //   Service.login(testUser)
          //    Service.insertRoutineToApi(testRoutine,8)
       //      Service.insertNoteToApi(testNote,8)
@@ -92,7 +96,7 @@ class MainActivity : ComponentActivity() {
        //     Service.deleteRoutine( 1,8)
            //  Service.deleteNote(1,8)
            // Service.deletetExerciseLog(1,8)
-            Service.insertTargetLocationsToApi(targetLocationEntity,8)
+          //  Service.insertTargetLocationsToApi(targetLocationEntity,1)
                 dao.insertUser(testUser)
         }
 

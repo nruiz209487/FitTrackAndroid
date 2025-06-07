@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -45,12 +46,18 @@ fun UserDataScreen(navController: NavController) {
     var editedEmail by remember { mutableStateOf("") }
     var editedProfileImage by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var editedGender by remember { mutableStateOf("") }
+    var editedHeight by remember { mutableStateOf("") }
+    var editedWeight by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val dao = MainActivity.database.trackFitDao()
     val scope = rememberCoroutineScope()
+
+    val genderOptions = listOf("Masculino", "Femenino", "Otro", "Prefiero no decir")
 
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -67,12 +74,16 @@ fun UserDataScreen(navController: NavController) {
             }
         }
     }
+
     LaunchedEffect(Unit) {
         user = dao.getUser()
         user?.let {
             editedName = it.name ?: ""
             editedEmail = it.email
             editedProfileImage = it.profileImage ?: ""
+            editedGender = it.gender ?: ""
+            editedHeight = it.height?.toString() ?: ""
+            editedWeight = it.weight?.toString() ?: ""
 
             if (it.profileImage?.isNotEmpty() == true) {
                 selectedImageUri = try {
@@ -104,108 +115,160 @@ fun UserDataScreen(navController: NavController) {
             )
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                if (user == null) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                } else {
-                    ProfileImageSelector(
-                        selectedImageUri = selectedImageUri,
-                        onImageSelected = { imagePicker.launch("image/*") }
-                    )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            if (user == null) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else {
+                ProfileImageSelector(
+                    selectedImageUri = selectedImageUri,
+                    onImageSelected = { imagePicker.launch("image/*") }
+                )
 
+                OutlinedTextField(
+                    value = editedName,
+                    onValueChange = { editedName = it },
+                    label = { Text("Nombre") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                OutlinedTextField(
+                    value = editedEmail,
+                    onValueChange = { editedEmail = it },
+                    label = { Text("Email") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                )
+// Campo de género como menú desplegable - VERSIÓN CORREGIDA
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     OutlinedTextField(
-                        value = editedName,
-                        onValueChange = { editedName = it },
-                        label = { Text("Nombre") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = editedEmail,
-                        onValueChange = { editedEmail = it },
-                        label = { Text("Email") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-                    )
-
-                    Button(
-                        onClick = {
-                            if (editedName.isBlank() || editedEmail.isBlank()) {
-                                showError = true
-                                errorMessage = "Nombre y email son obligatorios"
-                                return@Button
-                            }
-
-                            scope.launch {
-                                isLoading = true
-                                try {
-                                    val updatedUser = user!!.copy(
-                                        name = editedName,
-                                        email = editedEmail,
-                                        profileImage = editedProfileImage
-                                    )
-
-                                    Service.updateUserApi(updatedUser)
-
-                                    Toast.makeText(
-                                        context,
-                                        "Perfil actualizado correctamente",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    navController.popBackStack()
-                                } catch (e: Exception) {
-                                    showError = true
-                                    errorMessage = "Error al actualizar: ${e.message}"
-                                    e.printStackTrace()
-                                } finally {
-                                    isLoading = false
-                                }
-                            }
-                        },
+                        value = editedGender,
+                        onValueChange = {},
+                        label = { Text("Género") },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp),
+                            .menuAnchor(), // Importante: este modifier es necesario
                         shape = RoundedCornerShape(12.dp),
-                        enabled = !isLoading
+                        readOnly = true,
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                        },
+                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
                     ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
+                        genderOptions.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option) },
+                                onClick = {
+                                    editedGender = option
+                                    expanded = false
+                                }
                             )
-                        } else {
-                            Text("Guardar cambios")
                         }
+                    }
+                }
+                OutlinedTextField(
+                    value = editedHeight,
+                    onValueChange = { editedHeight = it },
+                    label = { Text("Altura (cm)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+
+                OutlinedTextField(
+                    value = editedWeight,
+                    onValueChange = { editedWeight = it },
+                    label = { Text("Peso (kg)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+
+                Button(
+                    onClick = {
+                        if (editedName.isBlank() || editedEmail.isBlank()) {
+                            showError = true
+                            errorMessage = "Nombre y email son obligatorios"
+                            return@Button
+                        }
+
+                        scope.launch {
+                            isLoading = true
+                            try {
+                                val updatedUser = user!!.copy(
+                                    name = editedName,
+                                    email = editedEmail,
+                                    profileImage = editedProfileImage,
+                                    gender = editedGender.ifEmpty { null },
+                                    height = editedHeight.toDoubleOrNull(),
+                                    weight = editedWeight.toDoubleOrNull()
+                                )
+
+                                Service.updateUserApi(updatedUser)
+
+                                Toast.makeText(
+                                    context,
+                                    "Perfil actualizado correctamente",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                navController.popBackStack()
+                            } catch (e: Exception) {
+                                showError = true
+                                errorMessage = "Error al actualizar: ${e.message}"
+                                e.printStackTrace()
+                            } finally {
+                                isLoading = false
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !isLoading
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Guardar cambios")
                     }
                 }
             }
+        }
 
-            if (showError) {
-                Snackbar(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp),
-                    action = {
-                        TextButton(
-                            onClick = { showError = false }
-                        ) {
-                            Text("OK")
-                        }
+        if (showError) {
+            Snackbar(
+                modifier = Modifier.padding(16.dp),
+                action = {
+                    TextButton(
+                        onClick = { showError = false }
+                    ) {
+                        Text("OK")
                     }
-                ) {
-                    Text(errorMessage)
                 }
+            ) {
+                Text(errorMessage)
             }
         }
     }
@@ -218,55 +281,39 @@ fun ProfileImageSelector(
 ) {
     val context = LocalContext.current
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        contentAlignment = Alignment.Center
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onImageSelected),
-                contentAlignment = Alignment.Center
-            ) {
-                if (selectedImageUri != null) {
-                    Image(
-                        painter = rememberAsyncImagePainter(
-                            ImageRequest.Builder(context)
-                                .data(selectedImageUri)
-                                .crossfade(true)
-                                .build()
-                        ),
-                        contentDescription = "Profile Image",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                        contentDescription = "Default profile",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            TextButton(
-                onClick = onImageSelected,
-                modifier = Modifier.padding(top = 8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.CameraAlt,
-                    contentDescription = "Select image"
+        Image(
+            painter = if (selectedImageUri != null) {
+                rememberAsyncImagePainter(
+                    ImageRequest.Builder(context)
+                        .data(selectedImageUri)
+                        .crossfade(true)
+                        .build()
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Cambiar foto")
-            }
+            } else {
+                painterResource(id = R.drawable.ic_launcher_foreground)
+            },
+            contentDescription = "Profile Image",
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .clickable(onClick = onImageSelected),
+            contentScale = ContentScale.Crop
+        )
+
+        TextButton(
+            onClick = onImageSelected,
+            modifier = Modifier.padding(top = 8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.CameraAlt,
+                contentDescription = "Select image"
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Cambiar foto")
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.fittrack.entity
 
+import androidx.compose.ui.text.font.FontWeight
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
@@ -21,6 +22,10 @@ data class UserEntity(
     val profileImage: String? = null,
     var lastStreakDay: String,
     var password: String,
-
-
+    @ColumnInfo(name = "gender")
+    var gender: String? = null,
+    @ColumnInfo(name = "height")
+    var height: Double? = null,
+    @ColumnInfo(name = "weight")
+    var weight: Double? = null
 )

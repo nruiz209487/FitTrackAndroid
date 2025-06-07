@@ -7,10 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.MonitorWeight
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,7 +29,6 @@ import coil.request.ImageRequest
 import com.example.fittrack.MainActivity
 import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.ui.ui_elements.NavBar
-
 @Composable
 fun ProfileScreen(navController: NavController) {
     var user by remember { mutableStateOf<UserEntity?>(null) }
@@ -47,9 +44,10 @@ fun ProfileScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(innerPadding),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             ProfileHeaderSection(user = user)
 
@@ -66,6 +64,7 @@ fun ProfileScreen(navController: NavController) {
         }
     }
 }
+
 
 @Composable
 private fun ProfileHeaderSection(user: UserEntity?) {
@@ -86,42 +85,46 @@ private fun ProfileHeaderSection(user: UserEntity?) {
         ) {
             ProfileImage(
                 imageUrl = user?.profileImage ?: "imagenBasica.jpg",
-                modifier = Modifier.size(120.dp).align(Alignment.CenterHorizontally)
+                modifier = Modifier.size(120.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = user?.name ?: "Invitado",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold
-            )
-
-            if (user?.email != null) {
-                Spacer(modifier = Modifier.height(4.dp))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
-                    text = user.email,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = user?.name ?: "Invitado",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
+
+                if (user?.email != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = user.email,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
             }
         }
     }
 }
-
 @Composable
 private fun ProfileImage(imageUrl: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier
+        modifier = Modifier
+            .fillMaxWidth()
     ) {
         Surface(
             shape = CircleShape,
-            tonalElevation = 8.dp,
-            shadowElevation = 8.dp,
-            modifier = Modifier.matchParentSize()
+            modifier = modifier
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
@@ -137,6 +140,7 @@ private fun ProfileImage(imageUrl: String, modifier: Modifier = Modifier) {
         }
     }
 }
+
 
 @Composable
 private fun UserMetricsSection(user: UserEntity) {
@@ -193,7 +197,6 @@ private fun MetricCard(metric: MetricData) {
         }
     }
 }
-
 @Composable
 private fun ActionButtonsSection(navController: NavController) {
     Column(
@@ -208,49 +211,52 @@ private fun ActionButtonsSection(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ),
-            elevation = ButtonDefaults.filledTonalButtonElevation(defaultElevation = 4.dp)
+            elevation = null
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Actualizar datos")
+            Icon(Icons.Outlined.Edit, contentDescription = "Actualizar datos")
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = "Actualizar datos", fontWeight = FontWeight.Medium)
         }
+
         FilledTonalButton(
             onClick = { navController.navigate("targetLocation") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f),
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             ),
-            elevation = ButtonDefaults.filledTonalButtonElevation(defaultElevation = 4.dp)
+            elevation = null
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Nuevo gimnasio")
+            Icon(Icons.Outlined.LocationOn, contentDescription = "Nuevo gimnasio")
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = "Nuevo gimnasio", fontWeight = FontWeight.Medium)
         }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             ActionButton(
                 onClick = { navController.navigate("settings") },
-                icon = Icons.Default.Settings,
+                icon = Icons.Outlined.Settings,
                 text = "Ajustes",
                 modifier = Modifier.weight(1f),
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.8f)
             )
 
             ActionButton(
                 onClick = { navController.navigate("IMCScreen") },
-                icon = Icons.Default.MonitorWeight,
+                icon = Icons.Outlined.MonitorWeight,
                 text = "IMC",
                 modifier = Modifier.weight(1f),
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f)
             )
         }
+
         OutlinedButton(
             onClick = { navController.navigate("login") },
             modifier = Modifier.fillMaxWidth(),
@@ -259,16 +265,15 @@ private fun ActionButtonsSection(navController: NavController) {
                 contentColor = MaterialTheme.colorScheme.error
             ),
             border = ButtonDefaults.outlinedButtonBorder.copy(
-                width = 1.dp,   )
+                width = 1.dp
+            )
         ) {
             Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Cerrar sesión")
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = "Cerrar sesión", fontWeight = FontWeight.Medium)
         }
     }
-}
-
-@Composable
+}@Composable
 private fun ActionButton(
     onClick: () -> Unit,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -283,13 +288,14 @@ private fun ActionButton(
         colors = ButtonDefaults.filledTonalButtonColors(
             containerColor = containerColor
         ),
-        elevation = ButtonDefaults.filledTonalButtonElevation(defaultElevation = 4.dp)
+        elevation = null
     ) {
         Icon(icon, contentDescription = text)
         Spacer(modifier = Modifier.width(8.dp))
         Text(text = text, fontWeight = FontWeight.Medium)
     }
 }
+
 
 data class MetricData(
     val title: String,
