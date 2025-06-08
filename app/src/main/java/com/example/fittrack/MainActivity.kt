@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -49,66 +48,69 @@ class MainActivity : ComponentActivity() {
             val scope = rememberCoroutineScope()
             val isDarkTheme by prefs.darkModeFlow.collectAsState(initial = false)
 
-            // State to hold the start destination, default to "login"
-            var startDestination by remember { mutableStateOf("login") }
+            var startDestination by remember { mutableStateOf<String?>(null) }
 
-            // Launch a coroutine to fetch user and update start destination
             LaunchedEffect(Unit) {
                 val user = dao.getUser()
                 if (user != null) {
                     Service.registerOrLogin(user)
                     startDestination = "home"
+                } else {
+                    startDestination = "login"
                 }
             }
 
             FitTrackTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = startDestination,
-                        modifier = Modifier.padding(innerPadding)
-                    ) {
-                        composable("home") { HomeScreen(navController) }
-                        composable("profile") { ProfileScreen(navController) }
-                        composable("settings") {
-                            SettingsScreen(
-                                navController = navController,
-                                darkTheme = isDarkTheme,
-                                onThemeToggle = {
-                                    scope.launch { prefs.saveDarkMode(it) }
-                                }
-                            )
-                        }
-                        composable("login") { LoginScreen(navController) }
-                        composable("user_data") { UserDataScreen(navController) }
-                        composable("routine/{routineId}") { backStackEntry ->
-                            val id = backStackEntry.arguments
-                                ?.getString("routineId")
-                                ?.toIntOrNull() ?: return@composable
-                            RoutinePage(navController, id)
-                        }
-                        composable("exercise_list") { ExerciseListPage(navController) }
-                        composable("exercise_logs/{exerciseId}") { backStackEntry ->
-                            val id = backStackEntry.arguments
-                                ?.getString("exerciseId")
-                                ?.toIntOrNull() ?: return@composable
-                            ExerciseLogsPage(
-                                exerciseId = id,
-                                navController = navController,
-                                dao = dao
-                            )
-                        }
-                        composable("notes") {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                NotesScreen(navController, dao)
+                    // Solo renderizamos NavHost cuando startDestination NO es null
+                    startDestination?.let { startDest ->
+                        NavHost(
+                            navController = navController,
+                            startDestination = startDest,
+                            modifier = Modifier.padding(innerPadding)
+                        ) {
+                            composable("home") { HomeScreen(navController) }
+                            composable("profile") { ProfileScreen(navController) }
+                            composable("settings") {
+                                SettingsScreen(
+                                    navController = navController,
+                                    darkTheme = isDarkTheme,
+                                    onThemeToggle = {
+                                        scope.launch { prefs.saveDarkMode(it) }
+                                    }
+                                )
                             }
+                            composable("login") { LoginScreen(navController) }
+                            composable("user_data") { UserDataScreen(navController) }
+                            composable("routine/{routineId}") { backStackEntry ->
+                                val id = backStackEntry.arguments
+                                    ?.getString("routineId")
+                                    ?.toIntOrNull() ?: return@composable
+                                RoutinePage(navController, id)
+                            }
+                            composable("exercise_list") { ExerciseListPage(navController) }
+                            composable("exercise_logs/{exerciseId}") { backStackEntry ->
+                                val id = backStackEntry.arguments
+                                    ?.getString("exerciseId")
+                                    ?.toIntOrNull() ?: return@composable
+                                ExerciseLogsPage(
+                                    exerciseId = id,
+                                    navController = navController,
+                                    dao = dao
+                                )
+                            }
+                            composable("notes") {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    NotesScreen(navController, dao)
+                                }
+                            }
+                            composable("create_routine") { CreateRoutinePage(navController) }
+                            composable("IMCScreen") { IMCScreen(navController) }
+                            composable("map") { MapPage(navController) }
+                            composable("createNewTargetLocation") { CreateNewTargetLocation(navController) }
+                            composable("targetLocation") { TargetLocationsScreen(navController) }
                         }
-                        composable("create_routine") { CreateRoutinePage(navController) }
-                        composable("IMCScreen") { IMCScreen(navController) }
-                        composable("map") { MapPage(navController) }
-                        composable("createNewTargetLocation") { CreateNewTargetLocation(navController) }
-                        composable("targetLocation") { TargetLocationsScreen(navController) }
                     }
                 }
             }

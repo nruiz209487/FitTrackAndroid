@@ -1,10 +1,11 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
-    id("kotlin-kapt") // 👈 AÑADE ESTA LÍNEA
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("kotlin-kapt")
     id("com.google.gms.google-services")
 }
+
 android {
     namespace = "com.example.fittrack"
     compileSdk = 35
@@ -45,9 +46,9 @@ dependencies {
 
     implementation ("com.google.accompanist:accompanist-permissions:0.37.2")
     // Maps Compose
-    implementation ("com.google.maps.android:maps-compose:2.11.0")
+    implementation("com.google.maps.android:maps-compose:4.3.0") // Última versión
 
-    implementation("com.google.android.gms:play-services-maps:19.2.0")
+    implementation("com.google.android.gms:play-services-maps:18.2.0") // Versión compatible
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -62,12 +63,11 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
-    implementation("io.coil-kt:coil-compose:2.4.0")
 
     // Auth
     implementation("com.google.firebase:firebase-auth")
 
-    // (Opcional) Analytics o lo que necesites
+    // Analytics o lo que necesites
     implementation("com.google.firebase:firebase-analytics")
     implementation ("androidx.compose.material:material-icons-extended:1.6.0")
     implementation ("androidx.compose.material3:material3:1.1.2")
