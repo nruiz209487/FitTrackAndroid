@@ -16,7 +16,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.fittrack.MainActivity
 import com.example.fittrack.entity.*
-import com.example.trackfit.database.TrackFitDao
+import com.example.fittrack.service.Service
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -94,7 +94,6 @@ fun RoutinePage(
                 },
                 onSave = {
                     saveExerciseLog(
-                        dao = dao,
                         exerciseId = current.id,
                         weight = weightText,
                         reps = repsText,
@@ -286,7 +285,6 @@ private fun NavigationButtons(
 }
 
 private fun saveExerciseLog(
-    dao: TrackFitDao,
     exerciseId: Int,
     weight: String,
     reps: String,
@@ -303,7 +301,7 @@ private fun saveExerciseLog(
     )
 
     MainScope().launch {
-        dao.insertExerciseLog(log)
+        Service.insertExerciseLogToApi(log)
         onComplete()
     }
 }

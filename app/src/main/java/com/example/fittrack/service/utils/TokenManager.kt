@@ -1,18 +1,19 @@
 
-package com.example.fittrack.service
+package com.example.fittrack.service.utils
+
 
 object TokenManager {
     var token: String? = null
     var userId: Int? = null
 
     fun saveUserSession(token: String, userId: Int) {
-        this.token = token
-        this.userId = userId
+        TokenManager.token = token
+        TokenManager.userId = userId
     }
 
     fun clearSession() {
-        this.token = null
-        this.userId = null
+        token = null
+        userId = null
     }
 
     fun isLoggedIn(): Boolean {

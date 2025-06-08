@@ -11,13 +11,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.fittrack.MainActivity
 import com.example.fittrack.entity.TargetLocationEntity
+import com.example.fittrack.service.Service
 import com.example.fittrack.ui.ui_elements.NavBar
 import kotlinx.coroutines.launch
 
@@ -59,7 +59,7 @@ fun TargetLocationsScreen(navController: NavController) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "Ubicaciones Objetivo",
+                text = "Crea una ubucacion para aumentar tu racha",
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -98,7 +98,7 @@ fun TargetLocationsScreen(navController: NavController) {
                 TextButton(
                     onClick = {
                         coroutineScope.launch {
-                            dao.deleteTargetLocation(location)
+                            Service.deleteTargetLocationEntity(location)
                             refreshLocations()
                             locationToDelete = null
                         }

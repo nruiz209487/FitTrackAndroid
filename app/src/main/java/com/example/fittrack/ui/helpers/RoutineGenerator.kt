@@ -1,7 +1,7 @@
-package com.example.fittrack.ui.ui_elements
-
-import com.example.fittrack.MainActivity
+package com.example.fittrack.ui.helpers
 import com.example.fittrack.entity.RoutineEntity
+import com.example.fittrack.service.Service
+
 class RoutineGenerator {
 
     // Datos de los ejercicios organizados por categorías
@@ -337,22 +337,22 @@ class RoutineGenerator {
         )
     }
 
-    // Función auxiliar para combinar ejercicios
     private fun combineExercises(vararg exerciseLists: List<Int>): String {
         return exerciseLists.flatMap { it }.joinToString(",")
     }
-}
 
-// Haz esta función suspend para poder llamar a funciones suspend dentro
-suspend fun generateAndSaveRoutines(imc: Double, genero: String, userId: Int) {
-    val routineGenerator = RoutineGenerator()
-    val weeklyRoutines = routineGenerator.generateWeeklyRoutines(imc, genero, userId)
+    companion object {
+        suspend fun generateAndSaveRoutines(imc: Double, genero: String, userId: Int) {
+            val routineGenerator = RoutineGenerator()
+            val weeklyRoutines = routineGenerator.generateWeeklyRoutines(imc, genero, userId)
 
-    // Guardar rutinas en la base de datos dentro de la corutina
-    val dao = MainActivity.database.trackFitDao()
-    weeklyRoutines.forEach { routine ->
-        dao.insertRoutine(routine)
+            weeklyRoutines.forEach { routine ->
+                Service.insertRoutineToApi(routine)
+            }
+        }
     }
 }
+
+
 
 

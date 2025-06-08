@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.fittrack.entity.NoteEntity
 import com.example.fittrack.ui.ui_elements.NavBar
-import com.example.trackfit.database.TrackFitDao
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -36,7 +35,9 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.ui.text.style.TextAlign
-import com.example.fittrack.ui.ui_elements.NotificationCreator
+import com.example.fittrack.database.TrackFitDao
+import com.example.fittrack.service.Service
+import com.example.fittrack.ui.helpers.NotificationCreator
 import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -84,7 +85,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
     LaunchedEffect(Unit) {
         refreshNotes()
         hasNotificationPermission = NotificationCreator.hasNotificationPermission(context)
-        if (!hasNotificationPermission && true) {
+        if (!hasNotificationPermission) {
             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
@@ -96,7 +97,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            if (!hasNotificationPermission && true) {
+            if (!hasNotificationPermission) {
                 Button(
                     onClick = { permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
                     modifier = Modifier
@@ -218,7 +219,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                     onClick = {
                         MainScope().launch {
                             NotificationCreator.cancelNotification(context, note.id)
-                            dao.deleteNote(note)
+                            Service.deleteNote(note)
                             refreshNotes()
                             noteToDelete = null
                         }
@@ -506,8 +507,7 @@ private fun saveNote(
     val note = NoteEntity(header = header, text = text, timestamp = timestampString)
 
     MainScope().launch {
-        dao.insertNote(note)
-
+        Service.insertNoteToApi(note)
         if (notificationDateTime != null) {
             val insertedNote = dao.getNotes().find {
                 it.header == header && it.text == text && it.timestamp == timestampString

@@ -17,8 +17,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.fittrack.MainActivity
 import com.example.fittrack.entity.TargetLocationEntity
+import com.example.fittrack.service.Service
 import com.example.fittrack.ui.ui_elements.NavBar
 import com.google.accompanist.permissions.*
 import com.google.android.gms.location.LocationServices
@@ -29,13 +29,13 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @OptIn(ExperimentalPermissionsApi::class)
 @SuppressLint("MissingPermission")
 @Composable
 fun CreateNewTargetLocation(navController: NavHostController) {
     val context = LocalContext.current
-    val dao = MainActivity.database.trackFitDao()
     val coroutineScope = rememberCoroutineScope()
 
     val fusedLocationClient = remember {
@@ -251,7 +251,7 @@ fun CreateNewTargetLocation(navController: NavHostController) {
 
                     selectedLocation?.let { loc ->
                         Text(
-                            text = "Coordenadas: ${String.format("%.6f", loc.latitude)}, ${String.format("%.6f", loc.longitude)}",
+                            text = "Coordenadas: ${String.format(Locale.US, "%.6f", loc.latitude)}, ${String.format(Locale.US, "%.6f", loc.longitude)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -291,11 +291,6 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Nueva Ubicación Objetivo",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
 
                 OutlinedTextField(
                     value = name,
@@ -334,11 +329,11 @@ fun CreateNewTargetLocation(navController: NavHostController) {
 
                         if (selectedLocation != null) {
                             Text(
-                                text = "Lat: ${String.format("%.6f", selectedLocation!!.latitude)}",
+                                text = "Coordenadas: ${String.format(Locale.US, "%.6f", selectedLocation!!.latitude)}, ${String.format(Locale.US, "%.6f", selectedLocation!!.longitude)}",
                                 style = MaterialTheme.typography.bodySmall
                             )
                             Text(
-                                text = "Lng: ${String.format("%.6f", selectedLocation!!.longitude)}",
+                                text = "Coordenadas: ${String.format(Locale.US, "%.6f", selectedLocation!!.latitude)}, ${String.format(Locale.US, "%.6f", selectedLocation!!.longitude)}",
                                 style = MaterialTheme.typography.bodySmall
                             )
                         } else {
@@ -408,7 +403,7 @@ fun CreateNewTargetLocation(navController: NavHostController) {
 
                                 coroutineScope.launch {
                                     try {
-                                        dao.insertTargetLocations(listOf(newLocation))
+                                        Service.insertTargetLocationsToApi(newLocation)
                                         showSuccessDialog = true
                                     } catch (e: Exception) {
                                         errorMessage = "Error al guardar: ${e.localizedMessage}"

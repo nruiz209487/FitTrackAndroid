@@ -15,12 +15,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.fittrack.entity.ExerciseLogEntity
 import com.example.fittrack.ui.ui_elements.NavBar
-import com.example.trackfit.database.TrackFitDao
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import com.example.fittrack.database.TrackFitDao
+import com.example.fittrack.service.Service
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
@@ -137,7 +138,8 @@ fun ExerciseLogsPage(
                     onClick = {
                         isDeleting = true
                         MainScope().launch {
-                            logToDelete?.let { dao.deleteExerciseLogs(it) }
+                            logToDelete?.let {Service.deleteExerciseLog(it)
+                            }
                             refreshLogs()
                             isDeleting = false
                             logToDelete = null

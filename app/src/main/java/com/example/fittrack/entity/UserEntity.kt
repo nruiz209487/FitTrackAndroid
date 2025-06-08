@@ -1,6 +1,5 @@
 package com.example.fittrack.entity
 
-import androidx.compose.ui.text.font.FontWeight
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
@@ -11,7 +10,7 @@ import androidx.room.PrimaryKey
     indices = [Index(value = ["email"], unique = true)]
 )
 data class UserEntity(
-    @PrimaryKey(autoGenerate = true)
+    @PrimaryKey(autoGenerate = false)
     val id: Int = 0,
     val name: String? = null,
     @ColumnInfo(name = "email")

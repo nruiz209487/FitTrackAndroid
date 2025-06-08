@@ -10,11 +10,10 @@ import com.example.fittrack.entity.RoutineEntity
 import com.example.fittrack.entity.TargetLocationEntity
 import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.type_converters.LatLngConverter
-import com.example.trackfit.database.TrackFitDao
 
 @Database(
     entities = [ExerciseLogEntity::class , NoteEntity::class , RoutineEntity::class , ExerciseEntity::class , UserEntity::class, TargetLocationEntity::class],
-    version = 11,
+    version = 20,
     exportSchema = true
 )
 @TypeConverters(LatLngConverter::class)

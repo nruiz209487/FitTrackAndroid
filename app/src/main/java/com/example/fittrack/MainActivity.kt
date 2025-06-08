@@ -16,16 +16,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.example.fittrack.database.TrackFitDatabase
-import com.example.fittrack.entity.ExerciseLogEntity
-import com.example.fittrack.entity.NoteEntity
-import com.example.fittrack.entity.RoutineEntity
-import com.example.fittrack.entity.TargetLocationEntity
 import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.service.Service
 import com.example.fittrack.ui.screens.*
 import com.example.fittrack.ui.theme.FitTrackTheme
 import com.example.fittrack.ui.theme_config.ThemePreferences
-import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -44,7 +39,7 @@ class MainActivity : ComponentActivity() {
             .build()
         val testUser = UserEntity(
             name = "Test User",
-            email = "testuser_${System.currentTimeMillis()}@example.com",
+            email = "testuser@example.com",
             streakDays = 1,
             profileImage = "https://example.com/avatar.png",
             lastStreakDay = "2025-06-05",
@@ -54,50 +49,20 @@ class MainActivity : ComponentActivity() {
             weight = 75.0
         )
 
-        val testRoutine = RoutineEntity(
-            name = "Rutina de prueba",
-            description = "Descripción de la rutina de prueba",
-            imageUri = "https://example.com/routine_image.png",
-            exerciseIds = "1,2,3", // IDs de ejercicios separados por coma
-            userId = testUser.id // o el campo que uses como clave externa
-        )
-        val testNote = NoteEntity(
-            header = "Rutina de prueba",
-            text = "Descripción de la rutina de prueba",
-            timestamp = "2025-06-05T21:26:12.000Z", // ← Fecha válida
-            userId = testUser.id // o el campo que uses como clave externa
-        )
-        val testExerciseLog = ExerciseLogEntity(
-            exerciseId = 1,
-            date = "2025-06-05T21:26:12.000Z", // ← Fecha válida
-            weight = 23.0f,
-            reps = 1, // ← Fecha válida
-            userId = testUser.id // o el campo que uses como clave externa
-        )
-        val targetLocationEntity = TargetLocationEntity(
-            name = "hola",
-            position = LatLng(19.4326, -99.1332), // ejemplo válido
-            radiusMeters = 200.0
-        )
-
         val dao = database.trackFitDao()
 
         lifecycleScope.launch {
-//Service.insertLogsFromApi()
-           //  Service.insertNotesFromApi()
-         //  Service.insertRoutinesFromApi()
-         //  Service.insertExercisesFromApi()
-       //   Service.insertTargetLocationsFromApi()
-         //   Service.insertUserToApi(testUser)
-         //   Service.login(testUser)
-         //    Service.insertRoutineToApi(testRoutine,8)
-      //      Service.insertNoteToApi(testNote,8)
-           // Service.insertExerciseLogToApi(testExerciseLog,8)
-       //     Service.deleteRoutine( 1,8)
-           //  Service.deleteNote(1,8)
-           // Service.deletetExerciseLog(1,8)
-          //  Service.insertTargetLocationsToApi(targetLocationEntity,1)
-                dao.insertUser(testUser)
+
+            val success = Service.registerOrLogin(testUser)
+
+            if (success) {
+
+                Service.insertExercisesFromApi()
+              Service.insertLogsFromApi()
+               Service.insertNotesFromApi()
+              Service.insertRoutinesFromApi()
+             Service.insertTargetLocationsFromApi()
+            }
         }
 
         enableEdgeToEdge()

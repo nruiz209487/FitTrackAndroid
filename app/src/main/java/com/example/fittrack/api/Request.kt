@@ -1,10 +1,11 @@
 package com.example.fittrack.api
 
 class Request {
-    data class UserByEmailResponse(
+    data class UserByEmailSuccessResponse(
         val token: String,
         val user: UserDetails
     )
+
     data class UserDetails(
         val user_id: Int,
         val email: String,
@@ -40,7 +41,7 @@ class Request {
     )
     data class TargetLocationRequest(
         val name: String,
-        val position: String, // formato "lat,lng"
+        val position: String,
         val radiusMeters: Double
     )
 

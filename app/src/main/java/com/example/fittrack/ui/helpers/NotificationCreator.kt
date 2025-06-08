@@ -1,4 +1,4 @@
-package com.example.fittrack.ui.ui_elements
+package com.example.fittrack.ui.helpers
 
 import android.Manifest
 import android.app.AlarmManager

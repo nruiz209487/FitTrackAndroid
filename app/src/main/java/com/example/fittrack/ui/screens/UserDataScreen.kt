@@ -14,7 +14,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,7 +32,7 @@ import com.example.fittrack.MainActivity
 import com.example.fittrack.R
 import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.service.Service
-import com.example.fittrack.service.FileUtils
+import com.example.fittrack.service.utils.FileUtils
 import kotlinx.coroutines.launch
 import java.io.File
 import androidx.core.net.toUri
@@ -159,7 +158,7 @@ fun UserDataScreen(navController: NavController) {
                         label = { Text("Género") },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor(), // Importante: este modifier es necesario
+                            .menuAnchor(),
                         shape = RoundedCornerShape(12.dp),
                         readOnly = true,
                         trailingIcon = {

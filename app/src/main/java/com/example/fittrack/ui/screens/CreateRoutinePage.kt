@@ -27,8 +27,8 @@ import coil.request.ImageRequest
 import com.example.fittrack.MainActivity
 import com.example.fittrack.entity.ExerciseEntity
 import com.example.fittrack.entity.RoutineEntity
+import com.example.fittrack.service.Service
 import com.example.fittrack.ui.ui_elements.NavBar
-import com.example.trackfit.database.TrackFitDao
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
@@ -179,7 +179,6 @@ fun CreateRoutinePage(navController: NavController) {
                     onClick = {
                         showDialog = false
                         saveRoutine(
-                            dao = dao,
                             routineName = routineName,
                             routineDescription = routineDescription,
                             selectedExerciseIds = selectedExercises.toList(),
@@ -249,7 +248,6 @@ fun ExerciseSelectionCard(
     }
 }
 private fun saveRoutine(
-    dao: TrackFitDao,
     routineName: String,
     routineDescription: String,
     selectedExerciseIds: List<Int>,
@@ -269,7 +267,7 @@ private fun saveRoutine(
 
     MainScope().launch {
         try {
-            dao.insertRoutine(routine)
+            Service.insertRoutineToApi(routine)
         } finally {
             onComplete()
         }

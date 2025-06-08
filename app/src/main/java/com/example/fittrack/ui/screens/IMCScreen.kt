@@ -13,7 +13,7 @@ import androidx.navigation.NavHostController
 import com.example.fittrack.MainActivity
 import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.ui.ui_elements.NavBar
-import com.example.fittrack.ui.ui_elements.generateAndSaveRoutines
+import com.example.fittrack.ui.helpers.RoutineGenerator
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 @Composable
@@ -98,12 +98,12 @@ fun IMCScreen(navController: NavHostController) {
             }
 
             Text(
-                text = "Calculadora de IMC",
+                text = "Crea uan rutina personalizada",
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
-            Text("Selecciona tu género:", style = MaterialTheme.typography.bodyLarge)
+            Text("Selecciona tu género:(opcional)", style = MaterialTheme.typography.bodyLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 FilterChip(
                     selected = genero == "Hombre",
@@ -154,7 +154,7 @@ fun IMCScreen(navController: NavHostController) {
                             generandoRutinas = true
                             try {
                                 val userId = user?.id ?: 1
-                                generateAndSaveRoutines(imc.value, genero, userId)
+                                RoutineGenerator.generateAndSaveRoutines(imc.value, genero, userId)
                                 rutinasGeneradas = true
                             } catch (e: Exception) {
                                 e.printStackTrace()

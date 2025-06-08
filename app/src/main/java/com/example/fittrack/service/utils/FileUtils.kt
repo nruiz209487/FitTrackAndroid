@@ -1,4 +1,4 @@
-package com.example.fittrack.service
+package com.example.fittrack.service.utils
 
 import android.content.Context
 import android.net.Uri

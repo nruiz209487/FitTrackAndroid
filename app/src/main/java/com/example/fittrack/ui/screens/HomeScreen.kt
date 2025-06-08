@@ -31,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import com.example.fittrack.R
 import com.example.fittrack.entity.UserEntity
+import com.example.fittrack.service.Service
 import kotlinx.coroutines.launch
 
 @Composable
@@ -156,7 +157,7 @@ fun HomeScreen(navController: NavController) {
                 TextButton(
                     onClick = {
                         coroutineScope.launch {
-                            routineToDelete?.let { dao.deleteRoutine(it) }
+                            routineToDelete?.let { Service.deleteRoutine( it) }
                             loadRoutines()
                             routineToDelete = null
                         }
