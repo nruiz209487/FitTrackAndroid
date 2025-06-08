@@ -13,7 +13,7 @@ import com.example.fittrack.type_converters.LatLngConverter
 
 @Database(
     entities = [ExerciseLogEntity::class , NoteEntity::class , RoutineEntity::class , ExerciseEntity::class , UserEntity::class, TargetLocationEntity::class],
-    version = 20,
+    version = 21,
     exportSchema = true
 )
 @TypeConverters(LatLngConverter::class)

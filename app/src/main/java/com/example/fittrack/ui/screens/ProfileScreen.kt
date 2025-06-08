@@ -1,5 +1,6 @@
 package com.example.fittrack.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -21,12 +22,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.fittrack.MainActivity
+import com.example.fittrack.R
 import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.ui.ui_elements.NavBar
 @Composable
@@ -84,10 +87,9 @@ private fun ProfileHeaderSection(user: UserEntity?) {
             modifier = Modifier.padding(24.dp)
         ) {
             ProfileImage(
-                imageUrl = user?.profileImage ?: "imagenBasica.jpg",
+                imageUrl = user?.profileImage,
                 modifier = Modifier.size(120.dp)
             )
-
             Spacer(modifier = Modifier.height(16.dp))
 
             Column(
@@ -115,28 +117,38 @@ private fun ProfileHeaderSection(user: UserEntity?) {
     }
 }
 @Composable
-private fun ProfileImage(imageUrl: String, modifier: Modifier = Modifier) {
+fun ProfileImage(imageUrl: String?, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     ) {
         Surface(
             shape = CircleShape,
             modifier = modifier
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(imageUrl)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "Imagen de perfil",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .fillMaxSize()
-            )
+            if (imageUrl != "") {
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(imageUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Imagen de perfil",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .fillMaxSize()
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    contentDescription = "Imagen de perfil por defecto",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .fillMaxSize()
+                )
+            }
         }
     }
 }

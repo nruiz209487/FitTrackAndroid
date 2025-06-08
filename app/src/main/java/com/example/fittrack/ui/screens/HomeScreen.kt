@@ -108,22 +108,31 @@ fun HomeScreen(navController: NavController) {
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
             )
-
             if (filteredRoutines.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = if (allRoutines.isEmpty()) {
-                            "No hay rutinas disponibles"
-                        } else {
-                            "No se encontraron rutinas con '$searchQuery'"
-                        },
-                        textAlign = TextAlign.Center
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = if (allRoutines.isEmpty()) {
+                                "No hay rutinas disponibles"
+                            } else {
+                                "No se encontraron rutinas con '$searchQuery'"
+                            },
+                            textAlign = TextAlign.Center
+                        )
+                        if (allRoutines.isEmpty()) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = { navController.navigate("IMCScreen") }) {
+                                Text("Creador de rutinas")
+                            }
+                        }
+                    }
                 }
-            } else {
+
+
+        } else {
                 RoutineGrid(
                     routines = filteredRoutines,
                     onItemClick = { routine ->

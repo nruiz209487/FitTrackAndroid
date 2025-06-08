@@ -245,22 +245,21 @@ fun MapPage(navController: NavController) {
     }
 
     if (showSuccessDialog && achievedLocation != null) {
-        user?.let {
+        user?.let { it ->
             val today = LocalDate.now()
-            val lastStreakDate = it.lastStreakDay.let { dateStr ->
+            val lastStreakDate = it.lastStreakDay.takeIf { it.isNotBlank() }?.let { dateStr ->
+                LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE)
+            } ?: LocalDate.MIN
 
-                    LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE)
-
-            }
-
-            if (lastStreakDate != today) {
+            if (lastStreakDate != null && lastStreakDate != today) {
                 it.streakDays = (it.streakDays ?: 0) + 1
                 it.lastStreakDay = today.toString()
 
-                scope.launch {
+                LaunchedEffect(Unit) {
                     Service.updateUserApi(it)
                 }
             }
+
 
         Dialog(
             onDismissRequest = {

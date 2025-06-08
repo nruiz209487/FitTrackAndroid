@@ -16,7 +16,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.example.fittrack.database.TrackFitDatabase
-import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.service.Service
 import com.example.fittrack.ui.screens.*
 import com.example.fittrack.ui.theme.FitTrackTheme
@@ -31,39 +30,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         database = Room.databaseBuilder(
             applicationContext,
             TrackFitDatabase::class.java,
-            "trackfit-db")
+            "trackfit-db"
+        )
             .fallbackToDestructiveMigration(false)
             .build()
-        val testUser = UserEntity(
-            name = "Test User",
-            email = "testuser@example.com",
-            streakDays = 1,
-            profileImage = "https://example.com/avatar.png",
-            lastStreakDay = "2025-06-05",
-            password = "password123",
-            gender = "male",
-            height = 175.5,
-            weight = 75.0
-        )
 
         val dao = database.trackFitDao()
-
-        lifecycleScope.launch {
-
-            val success = Service.registerOrLogin(testUser)
-
-            if (success) {
-
-                Service.insertExercisesFromApi()
-              Service.insertLogsFromApi()
-               Service.insertNotesFromApi()
-              Service.insertRoutinesFromApi()
-             Service.insertTargetLocationsFromApi()
-            }
-        }
 
         enableEdgeToEdge()
 
@@ -73,20 +49,28 @@ class MainActivity : ComponentActivity() {
             val scope = rememberCoroutineScope()
             val isDarkTheme by prefs.darkModeFlow.collectAsState(initial = false)
 
+            // State to hold the start destination, default to "login"
+            var startDestination by remember { mutableStateOf("login") }
+
+            // Launch a coroutine to fetch user and update start destination
+            LaunchedEffect(Unit) {
+                val user = dao.getUser()
+                if (user != null) {
+                    Service.registerOrLogin(user)
+                    startDestination = "home"
+                }
+            }
+
             FitTrackTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = "home",
+                        startDestination = startDestination,
                         modifier = Modifier.padding(innerPadding)
                     ) {
-                        composable("home") {
-                            HomeScreen(navController)
-                        }
-                        composable("profile") {
-                            ProfileScreen(navController)
-                        }
+                        composable("home") { HomeScreen(navController) }
+                        composable("profile") { ProfileScreen(navController) }
                         composable("settings") {
                             SettingsScreen(
                                 navController = navController,
@@ -96,21 +80,15 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
-                        composable("login") {
-                            LoginScreen(navController)
-                        }
-                        composable("user_data") {
-                            UserDataScreen(navController)
-                        }
+                        composable("login") { LoginScreen(navController) }
+                        composable("user_data") { UserDataScreen(navController) }
                         composable("routine/{routineId}") { backStackEntry ->
                             val id = backStackEntry.arguments
                                 ?.getString("routineId")
                                 ?.toIntOrNull() ?: return@composable
                             RoutinePage(navController, id)
                         }
-                        composable("exercise_list") {
-                            ExerciseListPage(navController)
-                        }
+                        composable("exercise_list") { ExerciseListPage(navController) }
                         composable("exercise_logs/{exerciseId}") { backStackEntry ->
                             val id = backStackEntry.arguments
                                 ?.getString("exerciseId")
@@ -126,22 +104,11 @@ class MainActivity : ComponentActivity() {
                                 NotesScreen(navController, dao)
                             }
                         }
-                        composable("create_routine") {
-                            CreateRoutinePage(navController)
-                        }
-                        composable("IMCScreen") {
-                            IMCScreen(navController)
-                        }
-                        composable("map") {
-                            MapPage(navController)
-                        }
-                        composable("createNewTargetLocation") {
-                            CreateNewTargetLocation(navController)
-                        }
-                        composable("targetLocation") {
-                            TargetLocationsScreen(navController)
-                        }
-
+                        composable("create_routine") { CreateRoutinePage(navController) }
+                        composable("IMCScreen") { IMCScreen(navController) }
+                        composable("map") { MapPage(navController) }
+                        composable("createNewTargetLocation") { CreateNewTargetLocation(navController) }
+                        composable("targetLocation") { TargetLocationsScreen(navController) }
                     }
                 }
             }

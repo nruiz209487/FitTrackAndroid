@@ -69,6 +69,13 @@ interface ApiService {
     @POST("/api/user/register")
     suspend fun registerUser(@Body user: UserRegistrationRequest): Response<RegisterUserResponse>
 
+    @PUT("/api/user/update/{id}")
+    suspend fun updateUser(
+        @Path("id") userId: Int,
+        @Body user: Request.UserUpdateRequest
+    ): Response<Request.UserUpdateResponse>
+
+
     @GET("/api/target-locations")
     suspend fun getTargetLocations(): Response<List<TargetLocationEntity>>
 
@@ -80,6 +87,7 @@ interface ApiService {
 
     @GET("/api/exercise-log/{user_id}")
     suspend fun getExerciseLogs(@Path("user_id") userId: Int): Response<List<ExerciseLogEntity>>
+
 
 
 

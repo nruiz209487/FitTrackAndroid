@@ -1,6 +1,22 @@
 package com.example.fittrack.api
 
 class Request {
+    data class UserUpdateRequest(
+        val email: String,
+        val password: String,
+        val password_confirmation: String,
+        val name: String?,
+        val gender: String?,
+        val height: Double?,
+        val weight: Double?,
+        val streak_days: Int? = null,
+        val profile_image: String? = null
+    )
+    data class UserUpdateResponse(
+        val success: Boolean,
+        val message: String,
+        val data: UserData?
+    )
     data class UserByEmailSuccessResponse(
         val token: String,
         val user: UserDetails

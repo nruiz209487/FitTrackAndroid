@@ -15,6 +15,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -52,6 +54,8 @@ fun UserDataScreen(navController: NavController) {
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
+    var isFirstTimeSetup by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
     val dao = MainActivity.database.trackFitDao()
     val scope = rememberCoroutineScope()
@@ -84,6 +88,9 @@ fun UserDataScreen(navController: NavController) {
             editedHeight = it.height?.toString() ?: ""
             editedWeight = it.weight?.toString() ?: ""
 
+            // Verificar si es la primera vez configurando el perfil
+            isFirstTimeSetup = it.gender.isNullOrEmpty() || it.height == null || it.weight == null
+
             if (it.profileImage?.isNotEmpty() == true) {
                 selectedImageUri = try {
                     if (it.profileImage.startsWith("content://")) {
@@ -105,10 +112,25 @@ fun UserDataScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Editar perfil") },
+                title = {
+                    Text(if (isFirstTimeSetup) "Completa tu perfil" else "Editar perfil")
+                },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    if (!isFirstTimeSetup) {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                },
+                actions = {
+                    if (!isFirstTimeSetup) {
+                        IconButton(onClick = {
+                            navController.navigate("home") {
+                                popUpTo("home") { inclusive = true }
+                            }
+                        }) {
+                            Icon(Icons.Filled.Home, contentDescription = "Go to Home")
+                        }
                     }
                 }
             )
@@ -125,6 +147,32 @@ fun UserDataScreen(navController: NavController) {
             if (user == null) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
+                // Mostrar mensaje de bienvenida si es primera vez
+                if (isFirstTimeSetup) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = "¡Bienvenido a FitTrack!",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Completa tu perfil para una mejor experiencia personalizada.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
+
                 ProfileImageSelector(
                     selectedImageUri = selectedImageUri,
                     onImageSelected = { imagePicker.launch("image/*") }
@@ -146,7 +194,8 @@ fun UserDataScreen(navController: NavController) {
                     shape = RoundedCornerShape(12.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                 )
-// Campo de género como menú desplegable - VERSIÓN CORREGIDA
+
+                // Campo de género como menú desplegable
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = { expanded = !expanded },
@@ -155,7 +204,7 @@ fun UserDataScreen(navController: NavController) {
                     OutlinedTextField(
                         value = editedGender,
                         onValueChange = {},
-                        label = { Text("Género") },
+                        label = { Text("Género${if (isFirstTimeSetup) " *" else ""}") },
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor(),
@@ -164,7 +213,8 @@ fun UserDataScreen(navController: NavController) {
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                         },
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                        isError = isFirstTimeSetup && editedGender.isEmpty()
                     )
 
                     ExposedDropdownMenu(
@@ -182,29 +232,47 @@ fun UserDataScreen(navController: NavController) {
                         }
                     }
                 }
+
                 OutlinedTextField(
                     value = editedHeight,
                     onValueChange = { editedHeight = it },
-                    label = { Text("Altura (cm)") },
+                    label = { Text("Altura (cm)${if (isFirstTimeSetup) " *" else ""}") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = isFirstTimeSetup && editedHeight.isEmpty()
                 )
 
                 OutlinedTextField(
                     value = editedWeight,
                     onValueChange = { editedWeight = it },
-                    label = { Text("Peso (kg)") },
+                    label = { Text("Peso (kg)${if (isFirstTimeSetup) " *" else ""}") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = isFirstTimeSetup && editedWeight.isEmpty()
                 )
+
+                // Mostrar campos obligatorios si es primera vez
+                if (isFirstTimeSetup) {
+                    Text(
+                        text = "* Campos obligatorios",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
                 Button(
                     onClick = {
                         if (editedName.isBlank() || editedEmail.isBlank()) {
                             showError = true
                             errorMessage = "Nombre y email son obligatorios"
+                            return@Button
+                        }
+
+                        if (isFirstTimeSetup && (editedGender.isEmpty() || editedHeight.isEmpty() || editedWeight.isEmpty())) {
+                            showError = true
+                            errorMessage = "Por favor completa todos los campos obligatorios"
                             return@Button
                         }
 
@@ -224,10 +292,19 @@ fun UserDataScreen(navController: NavController) {
 
                                 Toast.makeText(
                                     context,
-                                    "Perfil actualizado correctamente",
+                                    if (isFirstTimeSetup) "Perfil configurado correctamente" else "Perfil actualizado correctamente",
                                     Toast.LENGTH_SHORT
                                 ).show()
-                                navController.popBackStack()
+
+                                if (isFirstTimeSetup) {
+                                    // Si es primera vez, ir a home
+                                    navController.navigate("home") {
+                                        popUpTo("user_data") { inclusive = true }
+                                    }
+                                } else {
+                                    // Si es edición, volver atrás
+                                    navController.popBackStack()
+                                }
                             } catch (e: Exception) {
                                 showError = true
                                 errorMessage = "Error al actualizar: ${e.message}"
@@ -250,7 +327,27 @@ fun UserDataScreen(navController: NavController) {
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("Guardar cambios")
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (isFirstTimeSetup) "Completar configuración" else "Guardar cambios")
+                    }
+                }
+
+                // Botón para saltar configuración si es primera vez (opcional)
+                if (isFirstTimeSetup) {
+                    TextButton(
+                        onClick = {
+                            navController.navigate("home") {
+                                popUpTo("user_data") { inclusive = true }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Completar más tarde")
                     }
                 }
             }

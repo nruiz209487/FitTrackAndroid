@@ -95,8 +95,6 @@ object Service {
 
                 dao.insertUser(userWithApiId)
                 Log.d("REGISTRATION_TEST", "Usuario insertado localmente con ID de API: ${response.data.user_id}")
-
-                // TERCERO: Guardar la sesión solo después de ambos éxitos
                 TokenManager.saveUserSession(response.data.token, response.data.user_id)
 
                 return true
@@ -109,8 +107,6 @@ object Service {
             return false
         }
     }
-
-    // Métodos de inserción refactorizados para seguir el patrón API -> Local
 
     suspend fun insertTargetLocationsToApi(targetLocationEntity: TargetLocationEntity): Boolean {
         val userId = TokenManager.userId
@@ -332,7 +328,32 @@ object Service {
     }
 
     suspend fun updateUserApi(userEntity: UserEntity) {
-        val dao = MainActivity.database.trackFitDao()
-        dao.updateUser(userEntity)
+        try {
+            val userUpdateRequest = Request.UserUpdateRequest(
+                email = userEntity.email,
+                password = userEntity.password,
+                password_confirmation = userEntity.password,
+                name = userEntity.name,
+                gender = userEntity.gender,
+                height = userEntity.height,
+                weight = userEntity.weight,
+                streak_days = userEntity.streakDays,
+                profile_image = userEntity.profileImage
+            )
+
+
+            val response = ApiClient.updateUser(userEntity.id, userUpdateRequest)
+
+            // Si la API fue exitosa, actualizar base de datos local
+            if (response.success) {
+                val dao = MainActivity.database.trackFitDao()
+                dao.updateUser(userEntity)
+            } else {
+                throw Exception("API returned success=false: ${response.message}")
+            }
+
+        } catch (e: Exception) {
+            throw Exception("Error updating user: ${e.message}")
+        }
     }
 }

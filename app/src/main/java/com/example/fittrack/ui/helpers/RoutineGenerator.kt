@@ -3,8 +3,6 @@ import com.example.fittrack.entity.RoutineEntity
 import com.example.fittrack.service.Service
 
 class RoutineGenerator {
-
-    // Datos de los ejercicios organizados por categorías
     private val exercisesByCategory = mapOf(
         "fuerza_basica" to listOf(1, 3, 5, 10, 12, 15, 17), // Flexiones, Press banca, Peso muerto, Dominadas, Sentadillas, Press militar, Curl bíceps
         "cardio_bajo" to listOf(21, 29, 41, 61), // Skipping, Jumping Jacks, Jump Rope, Sprint cinta
@@ -20,8 +18,6 @@ class RoutineGenerator {
         "maquinas" to listOf(33, 54, 104, 106), // Prensa piernas, Prensa inclinada, Extensiones cuádriceps, Elevación gemelos máquina
         "bajo_impacto" to listOf(42, 53, 57, 82, 115, 119) // Band Pull Aparts, Face Pulls cuerda, Extensiones espalda, Press banda, Elevación piernas banda, Sentadilla banda
     )
-
-    // Función principal para generar rutinas según IMC
     fun generateWeeklyRoutines(imc: Double, genero: String, userId: Int): List<RoutineEntity> {
         return when {
             imc < 18.5 -> generateRoutinesForUnderweight(userId)
@@ -30,8 +26,6 @@ class RoutineGenerator {
             else -> generateRoutinesForObese(userId)
         }
     }
-
-    // Rutinas para peso bajo - Enfoque en ganar masa muscular
     private fun generateRoutinesForUnderweight(userId: Int): List<RoutineEntity> {
         return listOf(
             RoutineEntity(
@@ -108,7 +102,6 @@ class RoutineGenerator {
         )
     }
 
-    // Rutinas para peso normal - Mantenimiento equilibrado
     private fun generateRoutinesForNormal(userId: Int): List<RoutineEntity> {
         return listOf(
             RoutineEntity(

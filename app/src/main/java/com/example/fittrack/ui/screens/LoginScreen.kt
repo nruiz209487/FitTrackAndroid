@@ -16,18 +16,24 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.fittrack.entity.UserEntity
+import com.example.fittrack.service.Service
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(navController: NavController) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
+    val scope = rememberCoroutineScope()
+
     var mail by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var showConfirmPassword by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface
@@ -49,6 +55,7 @@ fun LoginScreen(navController: NavController) {
                 value = mail,
                 onValueChange = { mail = it },
                 label = { Text("Correo electrónico") },
+                enabled = !isLoading,
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -63,6 +70,7 @@ fun LoginScreen(navController: NavController) {
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Contraseña") },
+                enabled = !isLoading,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     val icon =
@@ -86,6 +94,7 @@ fun LoginScreen(navController: NavController) {
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
                     label = { Text("Confirmar Contraseña") },
+                    enabled = !isLoading,
                     visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         val icon =
@@ -109,19 +118,67 @@ fun LoginScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = androidx.compose.ui.Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             Button(
                 onClick = {
                     if (mail.isNotEmpty() && password.isNotEmpty()) {
+                        isLoading = true
                         auth.signInWithEmailAndPassword(mail, password)
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
                                     val user = auth.currentUser
                                     if (user != null && user.isEmailVerified) {
-                                        navController.navigate("profile")
-                                        Toast.makeText(
-                                            context, "Sesión iniciada", Toast.LENGTH_SHORT
-                                        ).show()
+                                        scope.launch {
+                                            try {
+                                                val userEntity = UserEntity(
+                                                    name = user.displayName ?: "Usuario",
+                                                    email = user.email ?: mail,
+                                                    streakDays = 1, // Valor inicial
+                                                    profileImage = user.photoUrl?.toString() ?: "",
+                                                    lastStreakDay = "",
+                                                    password = password,
+                                                    gender = "",
+                                                    height = 0.0,
+                                                    weight = 0.0
+                                                )
+
+                                                val success = Service.registerOrLogin(userEntity)
+
+                                                isLoading = false
+                                                if (success) {
+                                                    Toast.makeText(
+                                                        context, "Sesión iniciada correctamente", Toast.LENGTH_SHORT
+                                                    ).show()
+                                                    Service.insertExercisesFromApi()
+                                                    Service.insertLogsFromApi()
+                                                    Service.insertNotesFromApi()
+                                                    Service.insertRoutinesFromApi()
+                                                    Service.insertTargetLocationsFromApi()
+                                                    navController.navigate("user_data")
+                                                } else {
+                                                    Toast.makeText(
+                                                        context, "Error al conectar con el servidor", Toast.LENGTH_LONG
+                                                    ).show()
+                                                }
+                                            } catch (e: Exception) {
+                                                isLoading = false
+                                                Toast.makeText(
+                                                    context, "Error de conexión: ${e.message}", Toast.LENGTH_LONG
+                                                ).show()
+                                                Log.e("API", "Error al hacer petición a la API", e)
+                                            }
+                                        }
                                     } else {
+                                        isLoading = false
                                         Toast.makeText(
                                             context,
                                             "Por favor verifica tu correo electrónico antes de iniciar sesión.",
@@ -130,6 +187,7 @@ fun LoginScreen(navController: NavController) {
                                         auth.signOut()
                                     }
                                 } else {
+                                    isLoading = false
                                     Toast.makeText(
                                         context,
                                         "Error: ${task.exception?.message}",
@@ -142,10 +200,13 @@ fun LoginScreen(navController: NavController) {
                         Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT)
                             .show()
                     }
-                }, colors = ButtonDefaults.buttonColors(
+                },
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ), modifier = Modifier.fillMaxWidth()
+                ),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = "Iniciar Sesión")
             }
@@ -169,18 +230,24 @@ fun LoginScreen(navController: NavController) {
                             return@Button
                         }
 
+                        isLoading = true
                         auth.createUserWithEmailAndPassword(mail, password)
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
                                     val user = auth.currentUser
                                     user?.sendEmailVerification()
                                         ?.addOnCompleteListener { verifyTask ->
+                                            isLoading = false
                                             if (verifyTask.isSuccessful) {
                                                 Toast.makeText(
                                                     context,
                                                     "Cuenta creada. Verifica tu correo electrónico antes de iniciar sesión.",
                                                     Toast.LENGTH_LONG
                                                 ).show()
+
+                                                // Resetear el formulario después del registro
+                                                showConfirmPassword = false
+                                                confirmPassword = ""
                                             } else {
                                                 Toast.makeText(
                                                     context,
@@ -191,6 +258,7 @@ fun LoginScreen(navController: NavController) {
                                         }
                                     auth.signOut()
                                 } else {
+                                    isLoading = false
                                     Toast.makeText(
                                         context,
                                         "Error: ${task.exception?.message}",
@@ -200,10 +268,13 @@ fun LoginScreen(navController: NavController) {
                                 }
                             }
                     }
-                }, colors = ButtonDefaults.buttonColors(
+                },
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                ), modifier = Modifier.fillMaxWidth()
+                ),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = if (showConfirmPassword) "Confirmar Registro" else "Crear Nueva Cuenta")
             }
