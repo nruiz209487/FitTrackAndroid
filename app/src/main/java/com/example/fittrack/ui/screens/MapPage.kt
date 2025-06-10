@@ -67,7 +67,7 @@ fun MapPage(navController: NavController) {
     )
 
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(37.4220541, -122.0853242), 12f) // Centrado en Googleplex
+        position = CameraPosition.fromLatLngZoom(LatLng(37.4220541, -122.0853242), 12f)
     }
 
     fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
@@ -193,7 +193,7 @@ fun MapPage(navController: NavController) {
         Column(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(end = 16.dp, bottom = 100.dp), // Margen para evitar el NavBar
+                .padding(end = 16.dp, bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             FloatingActionButton(
@@ -245,100 +245,109 @@ fun MapPage(navController: NavController) {
     }
 
     if (showSuccessDialog && achievedLocation != null) {
-        user?.let { it ->
+        user?.let { currentUser ->
             val today = LocalDate.now()
-            val lastStreakDate = it.lastStreakDay.takeIf { it.isNotBlank() }?.let { dateStr ->
-                LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE)
-            } ?: LocalDate.MIN
+            val lastStreakDate = currentUser.lastStreakDay
+                ?.takeIf { it.isNotBlank() }
+                ?.let { dateStr -> LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE) }
+                ?: LocalDate.now().minusDays(1)
 
-            if (lastStreakDate != null && lastStreakDate != today) {
-                it.streakDays = (it.streakDays ?: 0) + 1
-                it.lastStreakDay = today.toString()
+            val shouldUpdateStreak = lastStreakDate != null && lastStreakDate != today
 
-                LaunchedEffect(Unit) {
-                    Service.updateUserApi(it)
+            if (shouldUpdateStreak) {
+
+                val updatedUser = currentUser.copy(
+                    streakDays = (currentUser.streakDays ?: 0) + 1,
+                    lastStreakDay = today.toString()
+                )
+                user = updatedUser
+
+                scope.launch {
+                    try {
+                        Service.updateUserApi(updatedUser)
+                    } catch (e: Exception) {
+                        user = currentUser
+                    }
                 }
             }
 
-
-        Dialog(
-            onDismissRequest = {
-                showSuccessDialog = false
-                achievedLocation = null
-            }
-        ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            Dialog(
+                onDismissRequest = {
+                    showSuccessDialog = false
+                    achievedLocation = null
+                }
             ) {
-                Column(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Éxito",
-                        tint = Color.Green,
-                        modifier = Modifier.size(80.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "¡Ubicación Alcanzada!",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Green,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "Has llegado a:",
-                        fontSize = 16.sp,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Text(
-                        text = achievedLocation!!.name,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Button(
-                        onClick = {
-                            showSuccessDialog = false
-                            achievedLocation = null
-                            navController.navigate("home") {
-                                popUpTo("home") { inclusive = true }
-                                launchSingleTop = true
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Green
-                        )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = "¡Has aumentado tu racha! ${user?.streakDays ?: 0} días",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Éxito",
+                            tint = Color.Green,
+                            modifier = Modifier.size(80.dp)
                         )
 
+                        Spacer(modifier = Modifier.height(16.dp))
 
+                        Text(
+                            text = "¡Ubicación Alcanzada!",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Green,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Has llegado a:",
+                            fontSize = 16.sp,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Text(
+                            text = achievedLocation!!.name,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Button(
+                            onClick = {
+                                showSuccessDialog = false
+                                achievedLocation = null
+                                navController.navigate("home") {
+                                    popUpTo("home") { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Green
+                            )
+                        ) {
+                            Text(
+                                text = "¡Has aumentado tu racha! ${user?.streakDays ?: 0} días",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }
         }
-    }}}
+    }}

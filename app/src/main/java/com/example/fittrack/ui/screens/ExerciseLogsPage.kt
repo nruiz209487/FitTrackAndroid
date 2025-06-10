@@ -1,5 +1,6 @@
 package com.example.fittrack.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -8,54 +9,66 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.fittrack.entity.ExerciseLogEntity
 import com.example.fittrack.ui.ui_elements.NavBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import com.example.fittrack.database.TrackFitDao
 import com.example.fittrack.service.Service
+import com.example.fittrack.ui.ui_elements.SearchBarComposable
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun ExerciseLogsPage(
     exerciseId: Int, navController: NavController, dao: TrackFitDao
 ) {
     var allLogs by remember { mutableStateOf<List<ExerciseLogEntity>>(emptyList()) }
-    var filteredLogs by remember { mutableStateOf<List<ExerciseLogEntity>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
     var logToDelete by remember { mutableStateOf<ExerciseLogEntity?>(null) }
     var isDeleting by remember { mutableStateOf(false) }
 
+    val filteredLogs = remember(searchQuery, allLogs) {
+        val logs = if (searchQuery.isBlank()) allLogs
+        else allLogs.filter { log ->
+            log.date.contains(searchQuery, ignoreCase = true) ||
+                    log.weight.toString().contains(searchQuery, ignoreCase = true) ||
+                    log.reps.toString().contains(searchQuery, ignoreCase = true)
+        }
+        logs.sortedByDescending { log ->
+            parseLogDate(log.date)
+        }
+    }
+
+    val groupedLogs = remember(filteredLogs) {
+        filteredLogs.groupBy { log ->
+            val date = parseLogDate(log.date)
+            date.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()))
+                .replaceFirstChar { it.uppercase() }
+        }.toList().sortedByDescending { (_, logs) ->
+            logs.maxOfOrNull { parseLogDate(it.date) }
+        }
+    }
+
     fun refreshLogs() {
         MainScope().launch {
             allLogs = dao.getExerciseLogsById(exerciseId)
-            filteredLogs = allLogs
         }
     }
 
     LaunchedEffect(exerciseId) {
         refreshLogs()
-    }
-
-    LaunchedEffect(searchQuery, allLogs) {
-        filteredLogs = if (searchQuery.isBlank()) {
-            allLogs
-        } else {
-            allLogs.filter { log ->
-                log.date.contains(searchQuery, ignoreCase = true) ||
-                        log.weight.toString().contains(searchQuery, ignoreCase = true) ||
-                        log.reps.toString().contains(searchQuery, ignoreCase = true)
-            }
-        }
     }
 
     Scaffold(
@@ -67,45 +80,65 @@ fun ExerciseLogsPage(
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            // Barra de búsqueda
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                placeholder = { Text("Buscar registros...") },
-                leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = "Buscar")
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp)
+            SearchBarComposable(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                placeholderText = "Buscar registros..."
             )
 
-            if (filteredLogs.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (allLogs.isEmpty()) {
-                        EmptyLogsState()
-                    } else {
-                        Text(
-                            text = "No se encontraron registros con '$searchQuery'",
-                            textAlign = TextAlign.Center
-                        )
+            Spacer(Modifier.height(16.dp))
+
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                if (groupedLogs.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (allLogs.isEmpty()) {
+                                EmptyLogsState()
+                            } else {
+                                Text(
+                                    text = "No se encontraron registros",
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
                     }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(filteredLogs) { log ->
-                        LogItemCard(
-                            log = log,
-                            onDelete = { logToDelete = it }
-                        )
+                } else {
+                    groupedLogs.forEach { (monthYear, logs) ->
+                        item {
+                            // Cabecera del mes/año
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                                ),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = monthYear,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.SemiBold
+                                        ),
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+
+                        items(logs) { log ->
+                            LogItemCard(log = log, onDelete = { logToDelete = it })
+                        }
                     }
                 }
             }
@@ -138,8 +171,7 @@ fun ExerciseLogsPage(
                     onClick = {
                         isDeleting = true
                         MainScope().launch {
-                            logToDelete?.let {Service.deleteExerciseLog(it)
-                            }
+                            logToDelete?.let { Service.deleteExerciseLog(it) }
                             refreshLogs()
                             isDeleting = false
                             logToDelete = null
@@ -159,63 +191,81 @@ fun ExerciseLogsPage(
         )
     }
 }
+
 @Composable
 private fun LogItemCard(log: ExerciseLogEntity, onDelete: (ExerciseLogEntity) -> Unit) {
     Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(8.dp, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.weight(1f)
-            ) {
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(60.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.secondary
+                            )
+                        ),
+                        shape = RoundedCornerShape(2.dp)
+                    )
+            )
+
+            Spacer(Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
-                        Text("Peso", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "Peso",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         Text(
                             "${log.weight} kg",
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                         )
                     }
 
                     Column(horizontalAlignment = Alignment.End) {
-                        Text("Repeticiones", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "Repeticiones",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         Text(
                             "${log.reps}",
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                         )
                     }
                 }
 
+                Spacer(Modifier.height(4.dp))
+
                 if (log.date.isNotEmpty()) {
                     Text(
-                        text = log.date,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                        text = formatLogDate(log.date),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
-
             IconButton(onClick = { onDelete(log) }) {
                 Icon(
-                    imageVector = Icons.Default.Delete,
+                    Icons.Default.Delete,
                     contentDescription = "Eliminar registro",
                     tint = MaterialTheme.colorScheme.error
                 )
@@ -227,14 +277,12 @@ private fun LogItemCard(log: ExerciseLogEntity, onDelete: (ExerciseLogEntity) ->
 @Composable
 private fun EmptyLogsState() {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "📝", style = MaterialTheme.typography.displayMedium
+            text = "📝",
+            style = MaterialTheme.typography.displayMedium
         )
         Spacer(Modifier.height(16.dp))
         Text(
@@ -249,5 +297,35 @@ private fun EmptyLogsState() {
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp)
         )
+    }
+}
+
+private fun parseLogDate(dateString: String): LocalDate {
+    return try {
+        when {
+            dateString.contains("/") -> {
+                val parts = dateString.split("/")
+                if (parts.size == 3) {
+                    LocalDate.of(parts[2].toInt(), parts[1].toInt(), parts[0].toInt())
+                } else {
+                    LocalDate.now()
+                }
+            }
+            dateString.contains("-") -> {
+                LocalDate.parse(dateString)
+            }
+            else -> LocalDate.now()
+        }
+    } catch (e: Exception) {
+        LocalDate.now()
+    }
+}
+
+private fun formatLogDate(dateString: String): String {
+    return try {
+        val date = parseLogDate(dateString)
+        date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+    } catch (e: Exception) {
+        dateString
     }
 }

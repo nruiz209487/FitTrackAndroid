@@ -10,13 +10,4 @@ object TokenManager {
         TokenManager.token = token
         TokenManager.userId = userId
     }
-
-    fun clearSession() {
-        token = null
-        userId = null
-    }
-
-    fun isLoggedIn(): Boolean {
-        return token != null && userId != null
-    }
 }

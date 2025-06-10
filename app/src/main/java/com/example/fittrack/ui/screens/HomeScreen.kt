@@ -26,12 +26,12 @@ import com.example.fittrack.ui.ui_elements.NavBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import com.example.fittrack.R
 import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.service.Service
+import com.example.fittrack.ui.ui_elements.SearchBarComposable
 import kotlinx.coroutines.launch
 
 @Composable
@@ -89,25 +89,19 @@ fun HomeScreen(navController: NavController) {
             }
         }
     ) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(2.dp)
         ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                placeholder = { Text("Buscar rutinas...") },
-                leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = "Buscar")
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp)
+            SearchBarComposable(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                placeholderText = "Buscar rutinas..."
             )
+
             if (filteredRoutines.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -130,9 +124,7 @@ fun HomeScreen(navController: NavController) {
                         }
                     }
                 }
-
-
-        } else {
+            } else {
                 RoutineGrid(
                     routines = filteredRoutines,
                     onItemClick = { routine ->
@@ -143,8 +135,7 @@ fun HomeScreen(navController: NavController) {
                     }
                 )
             }
-        }
-    }
+        }}
 
     if (routineToDelete != null) {
         AlertDialog(

@@ -24,17 +24,13 @@ class NotificationService : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        // Obtener datos del intent (compatibilidad con el formato anterior)
         val noteId = intent.getIntExtra("note_id", -1)
         val noteTitle = intent.getStringExtra("note_title")
         val noteContent = intent.getStringExtra("note_content")
-
-        // Obtener datos del nuevo formato
         val notificationId = intent.getIntExtra("notification_id", noteId)
         val notificationTitle = intent.getStringExtra("notification_title") ?: noteTitle ?: "Recordatorio"
         val notificationContent = intent.getStringExtra("notification_content") ?: noteContent ?: "Tienes una nota pendiente"
 
-        // Obtener datos extra
         val extraData = mutableMapOf<String, String>()
         intent.extras?.keySet()?.forEach { key ->
             if (key.startsWith("extra_")) {
@@ -66,7 +62,6 @@ class NotificationService : BroadcastReceiver() {
     ) {
         val appIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            // Agregar datos extra al intent de la actividad
             extraData.forEach { (key, value) ->
                 putExtra(key, value)
             }

@@ -13,43 +13,46 @@ import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.service.utils.TokenManager
 
 object Service {
-
     private suspend fun login(userEntity: UserEntity): Boolean {
         return try {
-            val userResponse = ApiClient.getUser(userEntity.email)
+            val userResponse = ApiClient.getUser(userEntity.email, userEntity.password)
 
             if (userResponse != null) {
-
-                TokenManager.saveUserSession(userResponse.token, userResponse.user.user_id)
+                userResponse.token?.let { userResponse.user?.let { it1 -> TokenManager.saveUserSession(it, it1.id) } }
 
                 val dao = MainActivity.database.trackFitDao()
-                val existingUser = dao.getUserById(userResponse.user.user_id)
+                val existingUser = userResponse.user?.let { dao.getUserById(it.id) }
 
                 if (existingUser == null) {
-                    val userFromApi = UserEntity(
-                        id = userResponse.user.user_id,
-                        name = userResponse.user.name,
-                        email = userResponse.user.email,
-                        streakDays = userResponse.user.streak_days ?: 1,
-                        profileImage = userResponse.user.profile_image,
-                        lastStreakDay = userResponse.user.lastStreakDay,
-                        password = userEntity.password,
-                        gender = userResponse.user.gender,
-                        height = userResponse.user.height,
-                        weight = userResponse.user.weight
-                    )
-                    dao.insertUser(userFromApi)
-                    Log.d("LOGIN", "Usuario sincronizado localmente con ID: ${userResponse.user.user_id}")
+                    val userFromApi = userResponse.user?.let {
+                        UserEntity(
+                            id = it.id,
+                            name = userResponse.user.name,
+                            email = userResponse.user.email,
+                            streakDays = userResponse.user.streakDays ?: 1,
+                            profileImage = userResponse.user.profileImage,
+                            lastStreakDay = userResponse.user.lastStreakDay,
+                            password = userEntity.password,
+                            gender = userResponse.user.gender,
+                            height = userResponse.user.height,
+                            weight = userResponse.user.weight
+                        )
+                    }
+                    if (userFromApi != null) {
+                        dao.insertUser(userFromApi)
+                    }
+                    Log.d("LOGIN", "Usuario sincronizado localmente con ID: ${userResponse.user?.id}")
                 }
 
-                Log.d("LOGIN", "Login exitoso - Token guardado, User ID: ${userResponse.user.user_id}")
+                Log.d("LOGIN", "Login exitoso - Token guardado, User ID: ${userResponse.user?.id}")
                 true
             } else {
-                Log.e("LOGIN", "Usuario no encontrado")
+                Log.e("LOGIN", "Usuario no encontrado o credenciales incorrectas")
                 false
             }
         } catch (e: Exception) {
             Log.e("LOGIN", "Error en login: ${e.message}")
+            e.printStackTrace()
             false
         }
     }
@@ -86,16 +89,16 @@ object Service {
             val response = ApiClient.registerUser(testUser)
 
             if (response.success) {
-                Log.d("REGISTRATION_TEST", "Usuario registrado con éxito en API! ID: ${response.data.user_id}")
+                Log.d("REGISTRATION_TEST", "Usuario registrado con éxito en API! ID: ${response.data.id}")
                 Log.d("REGISTRATION_TEST", "Token: ${response.data.token}")
                 val dao = MainActivity.database.trackFitDao()
                 val userWithApiId = userEntity.copy(
-                    id = response.data.user_id
+                    id = response.data.id
                 )
 
                 dao.insertUser(userWithApiId)
-                Log.d("REGISTRATION_TEST", "Usuario insertado localmente con ID de API: ${response.data.user_id}")
-                TokenManager.saveUserSession(response.data.token, response.data.user_id)
+                Log.d("REGISTRATION_TEST", "Usuario insertado localmente con ID de API: ${response.data.id}")
+                TokenManager.saveUserSession(response.data.token, response.data.id)
 
                 return true
             } else {
@@ -314,18 +317,19 @@ object Service {
             dao.insertRoutines(apiRoutines)
         }
     }
-
+    suspend fun insertTargetLocationsFromApi() {
+        val dao = MainActivity.database.trackFitDao()
+        TokenManager.userId?.let { userId ->
+            val apiTargetLocations = ApiClient.getTargetLocations(userId)
+            dao.insertTargetLocations(apiTargetLocations)
+        }
+    }
     suspend fun insertExercisesFromApi() {
         val dao = MainActivity.database.trackFitDao()
         val apiExercises = ApiClient.getExercises()
         dao.insertExercises(apiExercises)
     }
 
-    suspend fun insertTargetLocationsFromApi() {
-        val dao = MainActivity.database.trackFitDao()
-        val apiTargetLocations = ApiClient.getTargetLocations()
-        dao.insertTargetLocations(apiTargetLocations)
-    }
 
     suspend fun updateUserApi(userEntity: UserEntity) {
         try {
@@ -337,10 +341,10 @@ object Service {
                 gender = userEntity.gender,
                 height = userEntity.height,
                 weight = userEntity.weight,
-                streak_days = userEntity.streakDays,
-                profile_image = userEntity.profileImage
+                streakDays = userEntity.streakDays,
+                lastStreakDay = userEntity.lastStreakDay, // Añade esta línea
+                profileImage = userEntity.profileImage
             )
-
 
             val response = ApiClient.updateUser(userEntity.id, userUpdateRequest)
 
@@ -355,5 +359,4 @@ object Service {
         } catch (e: Exception) {
             throw Exception("Error updating user: ${e.message}")
         }
-    }
-}
+    }}

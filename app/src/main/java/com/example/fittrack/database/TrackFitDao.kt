@@ -7,7 +7,6 @@ import com.example.fittrack.entity.NoteEntity
 import com.example.fittrack.entity.RoutineEntity
 import com.example.fittrack.entity.TargetLocationEntity
 import com.example.fittrack.entity.UserEntity
-
 @Dao
 interface TrackFitDao {
 
@@ -27,6 +26,9 @@ interface TrackFitDao {
     @Delete
     suspend fun deleteUser(user: UserEntity)
 
+    @Query("DELETE FROM users")
+    suspend fun deleteAllUsers()
+
     // Exercise Logs
     @Insert
     suspend fun insertExerciseLog(exerciseLog: ExerciseLogEntity)
@@ -39,6 +41,9 @@ interface TrackFitDao {
 
     @Delete
     suspend fun deleteExerciseLogs(exerciseLogs: ExerciseLogEntity)
+
+    @Query("DELETE FROM exercise_log_table")
+    suspend fun deleteAllExerciseLogs()
 
     // Notes
     @Insert
@@ -53,6 +58,9 @@ interface TrackFitDao {
     @Query("SELECT * FROM note_table")
     suspend fun getNotes(): List<NoteEntity>
 
+    @Query("DELETE FROM note_table")
+    suspend fun deleteAllNotes()
+
     // Routines
     @Insert
     suspend fun insertRoutine(routine: RoutineEntity)
@@ -65,6 +73,9 @@ interface TrackFitDao {
 
     @Query("SELECT * FROM routine_table")
     suspend fun getRoutines(): List<RoutineEntity>
+
+    @Query("DELETE FROM routine_table")
+    suspend fun deleteAllRoutines()
 
     // Exercises
     @Insert
@@ -82,6 +93,10 @@ interface TrackFitDao {
     @Query("SELECT * FROM exercise_table WHERE id IN (:ids)")
     suspend fun getExercisesByIds(ids: List<Int>): List<ExerciseEntity>
 
+    @Query("SELECT * FROM exercise_table WHERE id = :id LIMIT 1")
+    suspend fun getExerciseById(id: Int): ExerciseEntity?
+
+
     // Target Locations
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTargetLocation(targetLocation: TargetLocationEntity)
@@ -94,4 +109,16 @@ interface TrackFitDao {
 
     @Query("SELECT * FROM target_location_table")
     suspend fun getTargetLocations(): List<TargetLocationEntity>
+
+    @Query("DELETE FROM target_location_table")
+    suspend fun deleteAllTargetLocations()
+
+    @Transaction
+    suspend fun clearAllData() {
+        deleteAllUsers()
+        deleteAllExerciseLogs()
+        deleteAllNotes()
+        deleteAllRoutines()
+        deleteAllTargetLocations()
+    }
 }

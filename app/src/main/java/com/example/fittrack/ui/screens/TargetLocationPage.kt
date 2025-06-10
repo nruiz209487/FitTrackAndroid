@@ -88,7 +88,6 @@ fun TargetLocationsScreen(navController: NavController) {
         }
     }
 
-    // Diálogo de confirmación para eliminar
     locationToDelete?.let { location ->
         AlertDialog(
             onDismissRequest = { locationToDelete = null },

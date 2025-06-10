@@ -39,8 +39,6 @@ interface ApiService {
         @Path("exercise_Id") routineId: Int
     ): Response<Unit>
 
-
-
     @POST("/api/routines/{user_id}")
     suspend fun insertRoutine(
         @Path("user_id") userId: Int,
@@ -59,15 +57,17 @@ interface ApiService {
         @Body log: ExerciseLogEntity
     ): Response<ExerciseLogEntity>
 
+    @POST("/api/user/register")
+    suspend fun registerUser(@Body user: UserRegistrationRequest): Response<RegisterUserResponse>
 
-    @GET("/api/user/{email}")
-    suspend fun getUserByEmail(@Path("email") email: String): Response<Request.UserByEmailSuccessResponse>
+    @POST("/api/user/{email}")
+    suspend fun getUserByEmail(
+        @Path("email") email: String,
+        @Body loginRequest: Request.LoginRequest
+    ): Response<Request.UserByEmailSuccessResponse>
 
     @GET("/api/exercises")
     suspend fun getExercises(): Response<List<ExerciseEntity>>
-
-    @POST("/api/user/register")
-    suspend fun registerUser(@Body user: UserRegistrationRequest): Response<RegisterUserResponse>
 
     @PUT("/api/user/update/{id}")
     suspend fun updateUser(
@@ -75,9 +75,8 @@ interface ApiService {
         @Body user: Request.UserUpdateRequest
     ): Response<Request.UserUpdateResponse>
 
-
-    @GET("/api/target-locations")
-    suspend fun getTargetLocations(): Response<List<TargetLocationEntity>>
+    @GET("/api/target-locations/{user_id}")
+    suspend fun getTargetLocations(@Path("user_id") userId: Int): Response<List<TargetLocationEntity>>
 
     @GET("/api/routines/{user_id}")
     suspend fun getRoutines(@Path("user_id") userId: Int): Response<List<RoutineEntity>>
@@ -87,8 +86,4 @@ interface ApiService {
 
     @GET("/api/exercise-log/{user_id}")
     suspend fun getExerciseLogs(@Path("user_id") userId: Int): Response<List<ExerciseLogEntity>>
-
-
-
-
 }

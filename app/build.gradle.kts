@@ -43,34 +43,34 @@ android {
 }
 dependencies {
 
+    // Permisos
+    implementation (libs.accompanist.permissions)
 
-    implementation ("com.google.accompanist:accompanist-permissions:0.37.2")
-    // Maps Compose
-    implementation("com.google.maps.android:maps-compose:4.3.0") // Última versión
-
-    implementation("com.google.android.gms:play-services-maps:18.2.0") // Versión compatible
+    // Maps
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.maps)
 
     // Retrofit
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation(libs.retrofit)
 
-    // Gson Converter para Retrofit
-    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+    // Gson Converter
+    implementation (libs.converter.gson)
 
-    implementation("com.squareup.okhttp3:logging-interceptor:4.9.0")
-    implementation("com.squareup.okhttp3:okhttp:4.9.0")
+    // okhttp
+    implementation(libs.logging.interceptor)
+    implementation(libs.okhttp)
 
-    // Si usas corrutinas (lo más común en Compose + Retrofit)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    //corrutinas
+    implementation(libs.kotlinx.coroutines.android)
 
-    implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
 
-    // Auth
-    implementation("com.google.firebase:firebase-auth")
-
-    // Analytics o lo que necesites
-    implementation("com.google.firebase:firebase-analytics")
-    implementation ("androidx.compose.material:material-icons-extended:1.6.0")
-    implementation ("androidx.compose.material3:material3:1.1.2")
+    // Analytics
+    implementation(libs.firebase.analytics)
+    implementation (libs.androidx.material.icons.extended)
+    implementation (libs.material3)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -90,8 +90,9 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    kapt(libs.androidx.room.compiler) // 👈 AÑADE ESTA LÍNEA
-    implementation("io.coil-kt:coil-compose:2.4.0")
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    //noinspection KaptUsageInsteadOfKsp
+    kapt(libs.androidx.room.compiler)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.datastore.preferences)
 
 }

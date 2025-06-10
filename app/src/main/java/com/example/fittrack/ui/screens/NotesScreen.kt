@@ -31,7 +31,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Search
+import com.example.fittrack.ui.ui_elements.SearchBarComposable
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.ui.text.style.TextAlign
@@ -113,17 +113,11 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                 }
             }
 
-            // Barra de búsqueda
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Buscar notas...") },
-                leadingIcon = { Icon(Icons.Default.Search, null) },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp)
+            SearchBarComposable(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                placeholderText = "Buscar ejercicios..."
             )
-
             Spacer(Modifier.height(16.dp))
 
             // Lista de notas

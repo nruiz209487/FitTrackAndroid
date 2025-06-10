@@ -16,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,13 +33,65 @@ import com.example.fittrack.MainActivity
 import com.example.fittrack.R
 import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.ui.ui_elements.NavBar
+import kotlinx.coroutines.launch
+import kotlin.system.exitProcess
+
 @Composable
 fun ProfileScreen(navController: NavController) {
     var user by remember { mutableStateOf<UserEntity?>(null) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
     val dao = MainActivity.database.trackFitDao()
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         user = dao.getUser()
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = {
+                Text(
+                    text = "Cerrar sesión",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            },
+            text = {
+                Text(
+                    text = "¿Estás seguro de que quieres cerrar sesión? Se borrarán todos los datos y se cerrará la aplicación.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            try {
+                                dao.clearAllData()
+                                (context as? MainActivity)?.finishAffinity()
+                                exitProcess(0)
+                            } catch (e: Exception) {
+                                (context as? MainActivity)?.finishAffinity()
+                                exitProcess(0)
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Confirmar")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showLogoutDialog = false }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -63,12 +116,13 @@ fun ProfileScreen(navController: NavController) {
                 CircularProgressIndicator(modifier = Modifier.padding(24.dp))
             }
 
-            ActionButtonsSection(navController)
+            ActionButtonsSection(
+                navController = navController,
+                onLogoutClick = { showLogoutDialog = true }
+            )
         }
     }
 }
-
-
 @Composable
 private fun ProfileHeaderSection(user: UserEntity?) {
     Card(
@@ -88,7 +142,7 @@ private fun ProfileHeaderSection(user: UserEntity?) {
         ) {
             ProfileImage(
                 imageUrl = user?.profileImage,
-                modifier = Modifier.size(120.dp)
+                modifier = Modifier.size(180.dp) // Cambiado de 120.dp a 180.dp
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -116,6 +170,7 @@ private fun ProfileHeaderSection(user: UserEntity?) {
         }
     }
 }
+
 @Composable
 fun ProfileImage(imageUrl: String?, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -152,7 +207,6 @@ fun ProfileImage(imageUrl: String?, modifier: Modifier = Modifier) {
         }
     }
 }
-
 
 @Composable
 private fun UserMetricsSection(user: UserEntity) {
@@ -209,8 +263,12 @@ private fun MetricCard(metric: MetricData) {
         }
     }
 }
+
 @Composable
-private fun ActionButtonsSection(navController: NavController) {
+private fun ActionButtonsSection(
+    navController: NavController,
+    onLogoutClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -270,22 +328,21 @@ private fun ActionButtonsSection(navController: NavController) {
         }
 
         OutlinedButton(
-            onClick = { navController.navigate("login") },
+            onClick = onLogoutClick,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = MaterialTheme.colorScheme.error
             ),
-            border = ButtonDefaults.outlinedButtonBorder.copy(
-                width = 1.dp
-            )
         ) {
             Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Cerrar sesión")
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = "Cerrar sesión", fontWeight = FontWeight.Medium)
         }
     }
-}@Composable
+}
+
+@Composable
 private fun ActionButton(
     onClick: () -> Unit,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -307,7 +364,6 @@ private fun ActionButton(
         Text(text = text, fontWeight = FontWeight.Medium)
     }
 }
-
 
 data class MetricData(
     val title: String,

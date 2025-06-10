@@ -9,6 +9,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object ApiClient  {
     suspend fun updateUser(userId: Int, user: Request.UserUpdateRequest): Request.UserUpdateResponse {
@@ -22,10 +23,11 @@ object ApiClient  {
     private const val BASE_URL = "http://10.0.2.2:8000"
 
     private val httpClient = OkHttpClient.Builder()
-        .addInterceptor(AuthInterceptor())              // Tu interceptor de autenticación
-        .addInterceptor(HttpLoggingInterceptor().apply {  // El interceptor de logging
+        .addInterceptor(AuthInterceptor())
+        .addInterceptor(HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         })
+        .readTimeout(2000, TimeUnit.SECONDS)
         .build()
 
     private val retrofitService: ApiService by lazy {
@@ -36,18 +38,22 @@ object ApiClient  {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
-            .client(httpClient) // Aquí pasas el cliente con los interceptores
+            .client(httpClient)
             .build()
     }
 
 
-    suspend fun getUser(userEmail: String): Request.UserByEmailSuccessResponse? {
+    suspend fun getUser(userEmail: String, password: String): Request.UserByEmailSuccessResponse? {
         return try {
-            val response = retrofitService.getUserByEmail(userEmail)
+            val loginRequest = Request.LoginRequest(userEmail, password)
+            val response = retrofitService.getUserByEmail(userEmail, loginRequest)
+
             if (response.isSuccessful) {
                 response.body()
             } else {
                 Log.e("API_CLIENT", "Error al obtener usuario: ${response.code()} - ${response.message()}")
+                val errorBody = response.errorBody()?.string()
+                Log.e("API_CLIENT", "Error body: $errorBody")
                 null
             }
         } catch (e: Exception) {
@@ -72,7 +78,6 @@ object ApiClient  {
         }
     }
 
-    // Nueva función para insertar rutina
     suspend fun insertRoutine(routine: RoutineEntity, userId: Int): RoutineEntity {
         val response = retrofitService.insertRoutine(userId, routine)
         if (response.isSuccessful) {
@@ -123,7 +128,7 @@ object ApiClient  {
         }
     }
 
-    suspend   fun insertNote(testNote: NoteEntity, userId: Int): Any {
+    suspend  fun insertNote(testNote: NoteEntity, userId: Int): Any {
         val response = retrofitService.insertNote(userId, testNote)
         if (response.isSuccessful) {
             return response.body() ?: throw Exception("Empty response body")
@@ -136,8 +141,8 @@ object ApiClient  {
         val response = retrofitService.getExercises()
         return response.body().orEmpty()
    }
-     suspend fun getTargetLocations(): List<TargetLocationEntity> {
-        val response = retrofitService.getTargetLocations()
+     suspend fun getTargetLocations(userId: Int): List<TargetLocationEntity> {
+        val response = retrofitService.getTargetLocations(userId)
         return response.body().orEmpty()
     }
      suspend fun getRoutines(userId: Int): List<RoutineEntity> {

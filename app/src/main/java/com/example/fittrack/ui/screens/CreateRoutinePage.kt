@@ -6,19 +6,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -29,6 +25,7 @@ import com.example.fittrack.entity.ExerciseEntity
 import com.example.fittrack.entity.RoutineEntity
 import com.example.fittrack.service.Service
 import com.example.fittrack.ui.ui_elements.NavBar
+import com.example.fittrack.ui.ui_elements.SearchBarComposable
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
@@ -106,19 +103,10 @@ fun CreateRoutinePage(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                placeholder = { Text("Buscar ejercicios...") },
-                leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = "Buscar")
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                shape = RoundedCornerShape(12.dp)
+            SearchBarComposable(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                placeholderText = "Buscar ejercicios..."
             )
 
             Row(

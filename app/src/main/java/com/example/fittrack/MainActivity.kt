@@ -63,7 +63,6 @@ class MainActivity : ComponentActivity() {
             FitTrackTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    // Solo renderizamos NavHost cuando startDestination NO es null
                     startDestination?.let { startDest ->
                         NavHost(
                             navController = navController,

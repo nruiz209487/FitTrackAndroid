@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.fittrack.MainActivity
@@ -16,32 +17,80 @@ import com.example.fittrack.ui.ui_elements.NavBar
 import com.example.fittrack.ui.helpers.RoutineGenerator
 import kotlinx.coroutines.launch
 import kotlin.math.pow
+
 @Composable
 fun IMCScreen(navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope()
     val dao = MainActivity.database.trackFitDao()
     var user by remember { mutableStateOf<UserEntity?>(null) }
 
-    // Estados que se actualizarán cuando se cargue el usuario
+    val genderOptions = listOf("Masculino", "Femenino", "Otro")
+
     var genero by remember { mutableStateOf("") }
     var altura by remember { mutableStateOf(TextFieldValue("")) }
     var peso by remember { mutableStateOf(TextFieldValue("")) }
     var mostrarResultado by remember { mutableStateOf(false) }
     var rutinasGeneradas by remember { mutableStateOf(false) }
     var generandoRutinas by remember { mutableStateOf(false) }
+    var mostrarPopupRutinas by remember { mutableStateOf(false) }
 
-    // Cargar datos del usuario al iniciar
+
     LaunchedEffect(Unit) {
         user = dao.getUser()
     }
 
-    // Actualizar los campos cuando el usuario se carga
+
     LaunchedEffect(user) {
         user?.let {
             genero = it.gender ?: ""
             altura = TextFieldValue(it.height?.toString() ?: "")
             peso = TextFieldValue(it.weight?.toString() ?: "")
         }
+    }
+
+
+    if (mostrarPopupRutinas) {
+        AlertDialog(
+            onDismissRequest = { mostrarPopupRutinas = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "¡Rutinas Generadas!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Tus rutinas personalizadas han sido creadas exitosamente.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Ve a la sección de rutinas para ver tu plan semanal personalizado.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { mostrarPopupRutinas = false }
+                ) {
+                    Text("Entendido")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -58,7 +107,7 @@ fun IMCScreen(navController: NavHostController) {
                 derivedStateOf {
                     if (altura.text.isNotBlank() && peso.text.isNotBlank()) {
                         (peso.text.toDouble() / altura.text.toDouble().pow(2)) *
-                                if (genero == "Hombre") 1.0 else 0.95
+                                if (genero == "Masculino") 1.0 else 0.95
                     } else 0.0
                 }
             }
@@ -98,24 +147,45 @@ fun IMCScreen(navController: NavHostController) {
             }
 
             Text(
-                text = "Crea uan rutina personalizada",
+                text = "Crea una rutina personalizada",
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
-            Text("Selecciona tu género:(opcional)", style = MaterialTheme.typography.bodyLarge)
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                FilterChip(
-                    selected = genero == "Hombre",
-                    onClick = { genero = "Hombre" },
-                    label = { Text("Hombre") },
-                    modifier = Modifier.weight(1f)
+            Text("Selecciona tu género (opcional):", style = MaterialTheme.typography.bodyLarge)
+
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                genderOptions.forEach { option ->
+                    FilterChip(
+                        selected = genero == option,
+                        onClick = {
+                            genero = if (genero == option) {
+                                ""
+                            } else {
+                                option
+                            }
+                        },
+                        label = { Text(option) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            if (genero.isEmpty()) {
+                Text(
+                    text = "Género: No especificado",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                FilterChip(
-                    selected = genero == "Mujer",
-                    onClick = { genero = "Mujer" },
-                    label = { Text("Mujer") },
-                    modifier = Modifier.weight(1f)
+            } else {
+                Text(
+                    text = "Género seleccionado: $genero",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -143,7 +213,7 @@ fun IMCScreen(navController: NavHostController) {
                     coroutineScope.launch {
                         user?.let {
                             val updatedUser = it.copy(
-                                gender = genero,
+                                gender = genero.ifEmpty { null },
                                 height = altura.text.toDoubleOrNull(),
                                 weight = peso.text.toDoubleOrNull()
                             )
@@ -154,8 +224,9 @@ fun IMCScreen(navController: NavHostController) {
                             generandoRutinas = true
                             try {
                                 val userId = user?.id ?: 1
-                                RoutineGenerator.generateAndSaveRoutines(imc.value, genero, userId)
+                                RoutineGenerator.generateAndSaveRoutines(imc.value, userId)
                                 rutinasGeneradas = true
+                                mostrarPopupRutinas = true
                             } catch (e: Exception) {
                                 e.printStackTrace()
                             } finally {
@@ -165,7 +236,7 @@ fun IMCScreen(navController: NavHostController) {
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = genero.isNotEmpty() && altura.text.isNotBlank() && peso.text.isNotBlank()
+                enabled = altura.text.isNotBlank() && peso.text.isNotBlank()
             ) {
                 if (generandoRutinas) {
                     CircularProgressIndicator(
@@ -197,29 +268,6 @@ fun IMCScreen(navController: NavHostController) {
                         Text("Recomendaciones:",
                             style = MaterialTheme.typography.titleMedium)
                         Text(recomendacion)
-
-                        if (rutinasGeneradas) {
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    "¡Rutinas personalizadas generadas!",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            Text(
-                                "Ve a la sección de rutinas para ver tu plan semanal personalizado.",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
                     }
                 }
             }

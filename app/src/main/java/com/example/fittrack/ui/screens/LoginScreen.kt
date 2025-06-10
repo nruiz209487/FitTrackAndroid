@@ -16,10 +16,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.fittrack.MainActivity
 import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.service.Service
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -34,6 +37,61 @@ fun LoginScreen(navController: NavController) {
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
+
+    fun processUserLogin(user: FirebaseUser) {
+        scope.launch {
+            try {
+                val userEntity = UserEntity(
+                    name = user.displayName ?: "Usuario",
+                    email = user.email ?: mail,
+                    streakDays = 1,
+                    profileImage = user.photoUrl?.toString() ?: "",
+                    lastStreakDay = LocalDate.now().minusDays(1).toString(),
+                    password = password,
+                    gender = "",
+                    height = 0.0,
+                    weight = 0.0
+                )
+
+                val success = Service.registerOrLogin(userEntity)
+                isLoading = false
+
+                if (success) {
+                    Toast.makeText(
+                        context, "Sesión iniciada correctamente", Toast.LENGTH_SHORT
+                    ).show()
+
+
+                    Service.insertLogsFromApi()
+                    Service.insertNotesFromApi()
+                    Service.insertRoutinesFromApi()
+                    Service.insertTargetLocationsFromApi()
+
+
+                    val dao = MainActivity.database.trackFitDao()
+                    val existingUser = dao.getUser()
+                    Service.insertExercisesFromApi()
+                    if (existingUser?.gender.isNullOrEmpty() ||
+                        existingUser?.height == null ||
+                        existingUser.weight == null) {
+                        navController.navigate("user_data")
+                    } else {
+                        navController.navigate("home")
+                    }
+                } else {
+                    Toast.makeText(
+                        context, "Error al conectar con el servidor", Toast.LENGTH_LONG
+                    ).show()
+                }
+            } catch (e: Exception) {
+                isLoading = false
+                Toast.makeText(
+                    context, "Error de conexión: ${e.message}", Toast.LENGTH_LONG
+                ).show()
+                Log.e("API", "Error al hacer petición a la API", e)
+            }
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface
@@ -73,8 +131,7 @@ fun LoginScreen(navController: NavController) {
                 enabled = !isLoading,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val icon =
-                        if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(imageVector = icon, contentDescription = "Toggle password visibility")
                     }
@@ -97,8 +154,7 @@ fun LoginScreen(navController: NavController) {
                     enabled = !isLoading,
                     visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
-                        val icon =
-                            if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        val icon = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                         IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                             Icon(
                                 imageVector = icon,
@@ -137,46 +193,7 @@ fun LoginScreen(navController: NavController) {
                                 if (task.isSuccessful) {
                                     val user = auth.currentUser
                                     if (user != null && user.isEmailVerified) {
-                                        scope.launch {
-                                            try {
-                                                val userEntity = UserEntity(
-                                                    name = user.displayName ?: "Usuario",
-                                                    email = user.email ?: mail,
-                                                    streakDays = 1, // Valor inicial
-                                                    profileImage = user.photoUrl?.toString() ?: "",
-                                                    lastStreakDay = "",
-                                                    password = password,
-                                                    gender = "",
-                                                    height = 0.0,
-                                                    weight = 0.0
-                                                )
-
-                                                val success = Service.registerOrLogin(userEntity)
-
-                                                isLoading = false
-                                                if (success) {
-                                                    Toast.makeText(
-                                                        context, "Sesión iniciada correctamente", Toast.LENGTH_SHORT
-                                                    ).show()
-                                                    Service.insertExercisesFromApi()
-                                                    Service.insertLogsFromApi()
-                                                    Service.insertNotesFromApi()
-                                                    Service.insertRoutinesFromApi()
-                                                    Service.insertTargetLocationsFromApi()
-                                                    navController.navigate("user_data")
-                                                } else {
-                                                    Toast.makeText(
-                                                        context, "Error al conectar con el servidor", Toast.LENGTH_LONG
-                                                    ).show()
-                                                }
-                                            } catch (e: Exception) {
-                                                isLoading = false
-                                                Toast.makeText(
-                                                    context, "Error de conexión: ${e.message}", Toast.LENGTH_LONG
-                                                ).show()
-                                                Log.e("API", "Error al hacer petición a la API", e)
-                                            }
-                                        }
+                                        processUserLogin(user)
                                     } else {
                                         isLoading = false
                                         Toast.makeText(
@@ -197,8 +214,7 @@ fun LoginScreen(navController: NavController) {
                                 }
                             }
                     } else {
-                        Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT)
-                            .show()
+                        Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
                     }
                 },
                 enabled = !isLoading,
@@ -219,8 +235,7 @@ fun LoginScreen(navController: NavController) {
                         if (mail.isNotEmpty() && password.isNotEmpty()) {
                             showConfirmPassword = true
                         } else {
-                            Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT)
-                                .show()
+                            Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
                         }
                     } else {
                         if (password != confirmPassword) {
@@ -244,8 +259,6 @@ fun LoginScreen(navController: NavController) {
                                                     "Cuenta creada. Verifica tu correo electrónico antes de iniciar sesión.",
                                                     Toast.LENGTH_LONG
                                                 ).show()
-
-                                                // Resetear el formulario después del registro
                                                 showConfirmPassword = false
                                                 confirmPassword = ""
                                             } else {

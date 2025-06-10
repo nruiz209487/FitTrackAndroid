@@ -46,17 +46,11 @@ fun CreateNewTargetLocation(navController: NavHostController) {
     var showErrorDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-
-    // Estados para el mapa y ubicación
     var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
     var showMapSelector by remember { mutableStateOf(false) }
-
-    // Estados para los campos del formulario
     var name by remember { mutableStateOf(TextFieldValue("")) }
     var radius by remember { mutableStateOf(TextFieldValue("200.0")) }
-
-    // Estados para errores
     var radiusError by remember { mutableStateOf<String?>(null) }
     var showValidationError by remember { mutableStateOf(false) }
 
@@ -120,7 +114,6 @@ fun CreateNewTargetLocation(navController: NavHostController) {
     }
 
     if (showMapSelector) {
-        // Pantalla de selección en el mapa
         Box(modifier = Modifier.fillMaxSize()) {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
@@ -142,7 +135,6 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                     selectedLocation = latLng
                 }
             ) {
-                // Mostrar ubicación del usuario
                 userLocation?.let { loc ->
                     Marker(
                         state = MarkerState(position = loc),
@@ -151,7 +143,6 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                     )
                 }
 
-                // Mostrar ubicación seleccionada
                 selectedLocation?.let { loc ->
                     Marker(
                         state = MarkerState(position = loc),
@@ -159,7 +150,6 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                         snippet = "Toca 'Confirmar' para usar esta ubicación"
                     )
 
-                    // Mostrar círculo de radio si hay una ubicación seleccionada
                     radius.text.toDoubleOrNull()?.let { radiusValue ->
                         if (radiusValue > 0 && radiusValue <= 10000) {
                             Circle(
@@ -174,7 +164,6 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                 }
             }
 
-            // Controles de zoom
             Column(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
@@ -228,7 +217,6 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                 }
             }
 
-            // Panel inferior con información y botones
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -280,7 +268,6 @@ fun CreateNewTargetLocation(navController: NavHostController) {
             }
         }
     } else {
-        // Pantalla principal del formulario
         Scaffold(
             bottomBar = { NavBar(navController) }
         ) { padding ->
@@ -306,7 +293,6 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                     }
                 )
 
-                // Card para mostrar la ubicación seleccionada
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -328,10 +314,6 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                         )
 
                         if (selectedLocation != null) {
-                            Text(
-                                text = "Coordenadas: ${String.format(Locale.US, "%.6f", selectedLocation!!.latitude)}, ${String.format(Locale.US, "%.6f", selectedLocation!!.longitude)}",
-                                style = MaterialTheme.typography.bodySmall
-                            )
                             Text(
                                 text = "Coordenadas: ${String.format(Locale.US, "%.6f", selectedLocation!!.latitude)}, ${String.format(Locale.US, "%.6f", selectedLocation!!.longitude)}",
                                 style = MaterialTheme.typography.bodySmall

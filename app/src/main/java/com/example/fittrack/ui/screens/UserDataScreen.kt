@@ -17,6 +17,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +28,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
@@ -35,6 +39,8 @@ import com.example.fittrack.R
 import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.service.Service
 import com.example.fittrack.service.utils.FileUtils
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.EmailAuthProvider
 import kotlinx.coroutines.launch
 import java.io.File
 import androidx.core.net.toUri
@@ -50,6 +56,15 @@ fun UserDataScreen(navController: NavController) {
     var editedGender by remember { mutableStateOf("") }
     var editedHeight by remember { mutableStateOf("") }
     var editedWeight by remember { mutableStateOf("") }
+
+    var currentPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmNewPassword by remember { mutableStateOf("") }
+    var showChangePassword by remember { mutableStateOf(false) }
+    var currentPasswordVisible by remember { mutableStateOf(false) }
+    var newPasswordVisible by remember { mutableStateOf(false) }
+    var confirmNewPasswordVisible by remember { mutableStateOf(false) }
+
     var isLoading by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
@@ -59,8 +74,9 @@ fun UserDataScreen(navController: NavController) {
     val context = LocalContext.current
     val dao = MainActivity.database.trackFitDao()
     val scope = rememberCoroutineScope()
+    val auth = FirebaseAuth.getInstance()
 
-    val genderOptions = listOf("Masculino", "Femenino", "Otro", "Prefiero no decir")
+    val genderOptions = listOf("Masculino", "Femenino", "Otro")
 
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -88,7 +104,6 @@ fun UserDataScreen(navController: NavController) {
             editedHeight = it.height?.toString() ?: ""
             editedWeight = it.weight?.toString() ?: ""
 
-            // Verificar si es la primera vez configurando el perfil
             isFirstTimeSetup = it.gender.isNullOrEmpty() || it.height == null || it.weight == null
 
             if (it.profileImage?.isNotEmpty() == true) {
@@ -105,6 +120,152 @@ fun UserDataScreen(navController: NavController) {
                 } catch (e: Exception) {
                     null
                 }
+            }
+        }
+    }
+
+    fun changePassword() {
+        if (currentPassword.isEmpty() || newPassword.isEmpty() || confirmNewPassword.isEmpty()) {
+            showError = true
+            errorMessage = "Completa todos los campos de contraseña"
+            return
+        }
+
+        if (newPassword != confirmNewPassword) {
+            showError = true
+            errorMessage = "Las nuevas contraseñas no coinciden"
+            return
+        }
+
+        if (newPassword.length < 6) {
+            showError = true
+            errorMessage = "La nueva contraseña debe tener al menos 6 caracteres"
+            return
+        }
+
+        scope.launch {
+            isLoading = true
+            try {
+                val firebaseUser = auth.currentUser
+                if (firebaseUser != null && firebaseUser.email != null) {
+                    val credential = EmailAuthProvider.getCredential(firebaseUser.email!!, currentPassword)
+
+                    firebaseUser.reauthenticate(credential)
+                        .addOnSuccessListener {
+                            firebaseUser.updatePassword(newPassword)
+                                .addOnSuccessListener {
+                                    scope.launch {
+                                        try {
+                                            val updatedUser = user!!.copy(
+                                                name = editedName,
+                                                email = editedEmail,
+                                                profileImage = editedProfileImage,
+                                                gender = editedGender.ifEmpty { null },
+                                                height = editedHeight.toDoubleOrNull(),
+                                                weight = editedWeight.toDoubleOrNull(),
+                                                password = newPassword
+                                            )
+
+                                            Service.updateUserApi(updatedUser)
+
+                                            Toast.makeText(
+                                                context,
+                                                "Contraseña y perfil actualizados correctamente",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+
+                                            currentPassword = ""
+                                            newPassword = ""
+                                            confirmNewPassword = ""
+                                            showChangePassword = false
+
+                                            if (isFirstTimeSetup) {
+                                                navController.navigate("home") {
+                                                    popUpTo("user_data") { inclusive = true }
+                                                }
+                                            } else {
+                                                navController.popBackStack()
+                                            }
+                                        } catch (e: Exception) {
+                                            showError = true
+                                            errorMessage = "Error al actualizar en servidor"
+                                            e.printStackTrace()
+                                        } finally {
+                                            isLoading = false
+                                        }
+                                    }
+                                }
+                                .addOnFailureListener {
+                                    isLoading = false
+                                    showError = true
+                                    errorMessage = "Error al cambiar contraseña en Firebase"
+                                }
+                        }
+                        .addOnFailureListener {
+                            isLoading = false
+                            showError = true
+                            errorMessage = "Contraseña actual incorrecta"
+                        }
+                } else {
+                    isLoading = false
+                    showError = true
+                    errorMessage = "Error: Usuario no autenticado"
+                }
+            } catch (e: Exception) {
+                isLoading = false
+                showError = true
+                errorMessage = "Error inesperado: ${e.message}"
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun saveProfile() {
+        if (editedName.isBlank() || editedEmail.isBlank()) {
+            showError = true
+            errorMessage = "Nombre y email son obligatorios"
+            return
+        }
+
+        if (isFirstTimeSetup && (editedGender.isEmpty() || editedHeight.isEmpty() || editedWeight.isEmpty())) {
+            showError = true
+            errorMessage = "Por favor completa todos los campos obligatorios"
+            return
+        }
+
+        scope.launch {
+            isLoading = true
+            try {
+                val updatedUser = user!!.copy(
+                    name = editedName,
+                    email = editedEmail,
+                    profileImage = editedProfileImage,
+                    gender = editedGender.ifEmpty { null },
+                    height = editedHeight.toDoubleOrNull(),
+                    weight = editedWeight.toDoubleOrNull()
+                )
+
+                Service.updateUserApi(updatedUser)
+
+                Toast.makeText(
+                    context,
+                    if (isFirstTimeSetup) "Perfil configurado correctamente" else "Perfil actualizado correctamente",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                if (isFirstTimeSetup) {
+                    navController.navigate("home") {
+                        popUpTo("user_data") { inclusive = true }
+                    }
+                } else {
+                    navController.popBackStack()
+                }
+            } catch (e: Exception) {
+                showError = true
+                errorMessage = "Error al actualizar: ${e.message}"
+                e.printStackTrace()
+            } finally {
+                isLoading = false
             }
         }
     }
@@ -147,7 +308,6 @@ fun UserDataScreen(navController: NavController) {
             if (user == null) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
-                // Mostrar mensaje de bienvenida si es primera vez
                 if (isFirstTimeSetup) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -186,16 +346,6 @@ fun UserDataScreen(navController: NavController) {
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                OutlinedTextField(
-                    value = editedEmail,
-                    onValueChange = { editedEmail = it },
-                    label = { Text("Email") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-                )
-
-                // Campo de género como menú desplegable
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = { expanded = !expanded },
@@ -253,7 +403,91 @@ fun UserDataScreen(navController: NavController) {
                     isError = isFirstTimeSetup && editedWeight.isEmpty()
                 )
 
-                // Mostrar campos obligatorios si es primera vez
+                if (!isFirstTimeSetup) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            TextButton(
+                                onClick = { showChangePassword = !showChangePassword },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    if (showChangePassword) "Cancelar cambio de contraseña" else "Cambiar contraseña",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+
+                            if (showChangePassword) {
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                OutlinedTextField(
+                                    value = currentPassword,
+                                    onValueChange = { currentPassword = it },
+                                    label = { Text("Contraseña actual") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    visualTransformation = if (currentPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                    trailingIcon = {
+                                        IconButton(onClick = { currentPasswordVisible = !currentPasswordVisible }) {
+                                            Icon(
+                                                imageVector = if (currentPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                                contentDescription = "Toggle password visibility"
+                                            )
+                                        }
+                                    },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                OutlinedTextField(
+                                    value = newPassword,
+                                    onValueChange = { newPassword = it },
+                                    label = { Text("Nueva contraseña") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    visualTransformation = if (newPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                    trailingIcon = {
+                                        IconButton(onClick = { newPasswordVisible = !newPasswordVisible }) {
+                                            Icon(
+                                                imageVector = if (newPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                                contentDescription = "Toggle password visibility"
+                                            )
+                                        }
+                                    },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                OutlinedTextField(
+                                    value = confirmNewPassword,
+                                    onValueChange = { confirmNewPassword = it },
+                                    label = { Text("Confirmar nueva contraseña") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    visualTransformation = if (confirmNewPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                    trailingIcon = {
+                                        IconButton(onClick = { confirmNewPasswordVisible = !confirmNewPasswordVisible }) {
+                                            Icon(
+                                                imageVector = if (confirmNewPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                                contentDescription = "Toggle password visibility"
+                                            )
+                                        }
+                                    },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                                )
+                            }
+                        }
+                    }
+                }
+
                 if (isFirstTimeSetup) {
                     Text(
                         text = "* Campos obligatorios",
@@ -264,54 +498,10 @@ fun UserDataScreen(navController: NavController) {
 
                 Button(
                     onClick = {
-                        if (editedName.isBlank() || editedEmail.isBlank()) {
-                            showError = true
-                            errorMessage = "Nombre y email son obligatorios"
-                            return@Button
-                        }
-
-                        if (isFirstTimeSetup && (editedGender.isEmpty() || editedHeight.isEmpty() || editedWeight.isEmpty())) {
-                            showError = true
-                            errorMessage = "Por favor completa todos los campos obligatorios"
-                            return@Button
-                        }
-
-                        scope.launch {
-                            isLoading = true
-                            try {
-                                val updatedUser = user!!.copy(
-                                    name = editedName,
-                                    email = editedEmail,
-                                    profileImage = editedProfileImage,
-                                    gender = editedGender.ifEmpty { null },
-                                    height = editedHeight.toDoubleOrNull(),
-                                    weight = editedWeight.toDoubleOrNull()
-                                )
-
-                                Service.updateUserApi(updatedUser)
-
-                                Toast.makeText(
-                                    context,
-                                    if (isFirstTimeSetup) "Perfil configurado correctamente" else "Perfil actualizado correctamente",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-
-                                if (isFirstTimeSetup) {
-                                    // Si es primera vez, ir a home
-                                    navController.navigate("home") {
-                                        popUpTo("user_data") { inclusive = true }
-                                    }
-                                } else {
-                                    // Si es edición, volver atrás
-                                    navController.popBackStack()
-                                }
-                            } catch (e: Exception) {
-                                showError = true
-                                errorMessage = "Error al actualizar: ${e.message}"
-                                e.printStackTrace()
-                            } finally {
-                                isLoading = false
-                            }
+                        if (showChangePassword) {
+                            changePassword()
+                        } else {
+                            saveProfile()
                         }
                     },
                     modifier = Modifier
@@ -333,11 +523,16 @@ fun UserDataScreen(navController: NavController) {
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (isFirstTimeSetup) "Completar configuración" else "Guardar cambios")
+                        Text(
+                            when {
+                                showChangePassword -> "Cambiar contraseña y guardar"
+                                isFirstTimeSetup -> "Completar configuración"
+                                else -> "Guardar cambios"
+                            }
+                        )
                     }
                 }
 
-                // Botón para saltar configuración si es primera vez (opcional)
                 if (isFirstTimeSetup) {
                     TextButton(
                         onClick = {

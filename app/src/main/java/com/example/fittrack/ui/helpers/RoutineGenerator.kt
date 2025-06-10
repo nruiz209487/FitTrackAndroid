@@ -1,24 +1,26 @@
 package com.example.fittrack.ui.helpers
 import com.example.fittrack.entity.RoutineEntity
 import com.example.fittrack.service.Service
+import com.example.fittrack.MainActivity
 
 class RoutineGenerator {
     private val exercisesByCategory = mapOf(
-        "fuerza_basica" to listOf(1, 3, 5, 10, 12, 15, 17), // Flexiones, Press banca, Peso muerto, Dominadas, Sentadillas, Press militar, Curl bíceps
-        "cardio_bajo" to listOf(21, 29, 41, 61), // Skipping, Jumping Jacks, Jump Rope, Sprint cinta
-        "cardio_intenso" to listOf(13, 14, 18, 51, 71), // Burpees, Mountain Climbers, Jump Squats, Jump Lunges, Battle Ropes
-        "core_basico" to listOf(2, 7, 8, 9, 16), // Planchas, Crunch, Elevación piernas, Oblicuos, Russian Twists
-        "core_avanzado" to listOf(30, 34, 40, 56, 65), // Ab Wheel, Dragon Flags, Plancha lateral, Tijeras abdominales, Elevación rodillas colgado
-        "piernas" to listOf(6, 20, 26, 37, 47, 64), // Zancadas, Hip Thrust, Patada glúteo, Step-ups, Sentadilla sumo, Sentadillas búlgaras
-        "espalda" to listOf(4, 25, 28, 36, 45, 63), // Remo mancuernas, Remo barra, Face Pulls, Dorsales polea, Remo máquina, Remo invertido
-        "pecho" to listOf(32, 38, 44, 62, 73, 85), // Flexiones diamante, Flexiones palmada, Press inclinado, Press agarre cerrado, Press mancuernas, Flexiones explosivas
-        "hombros" to listOf(24, 35, 50, 97, 114), // Press Arnold, Press hombros mancuernas, Elevaciones laterales, Press hombros barra, Press hombros sentado
-        "brazos" to listOf(11, 22, 46, 89, 109), // Fondos tríceps, Curl tríceps, Curl martillo, Curl inclinado, Fondos agarre estrecho
-        "funcional" to listOf(39, 49, 66, 68, 76, 88), // Kettlebell Swings, Paseo granjero, Clean Press, Martillo neumático, Snatch mancuerna, Swing una mano
-        "maquinas" to listOf(33, 54, 104, 106), // Prensa piernas, Prensa inclinada, Extensiones cuádriceps, Elevación gemelos máquina
-        "bajo_impacto" to listOf(42, 53, 57, 82, 115, 119) // Band Pull Aparts, Face Pulls cuerda, Extensiones espalda, Press banda, Elevación piernas banda, Sentadilla banda
+        "fuerza_basica" to listOf(1, 3, 5, 10, 12, 15, 17),
+        "cardio_bajo" to listOf(21, 29, 41, 61),
+        "cardio_intenso" to listOf(13, 14, 18, 51, 71),
+        "core_basico" to listOf(2, 7, 8, 9, 16),
+        "core_avanzado" to listOf(30, 34, 40, 56, 65),
+        "piernas" to listOf(6, 20, 26, 37, 47, 64),
+        "espalda" to listOf(4, 25, 28, 36, 45, 63),
+        "pecho" to listOf(32, 38, 44, 62, 73, 85),
+        "hombros" to listOf(24, 35, 50, 97, 114),
+        "brazos" to listOf(11, 22, 46, 89, 109),
+        "funcional" to listOf(39, 49, 66, 68, 76, 88),
+        "maquinas" to listOf(33, 54, 104, 106),
+        "bajo_impacto" to listOf(42, 53, 57, 82, 115, 119)
     )
-    fun generateWeeklyRoutines(imc: Double, genero: String, userId: Int): List<RoutineEntity> {
+
+    suspend fun generateWeeklyRoutines(imc: Double, userId: Int): List<RoutineEntity> {
         return when {
             imc < 18.5 -> generateRoutinesForUnderweight(userId)
             imc < 25 -> generateRoutinesForNormal(userId)
@@ -26,12 +28,13 @@ class RoutineGenerator {
             else -> generateRoutinesForObese(userId)
         }
     }
-    private fun generateRoutinesForUnderweight(userId: Int): List<RoutineEntity> {
+
+    private suspend fun generateRoutinesForUnderweight(userId: Int): List<RoutineEntity> {
         return listOf(
             RoutineEntity(
                 name = "Lunes - Pecho y Tríceps",
                 description = "Rutina de fuerza para ganar masa muscular en tren superior",
-                imageUri = "",
+                imageUri = getExerciseImage(1),
                 exerciseIds = combineExercises(
                     exercisesByCategory["fuerza_basica"]!!.take(2),
                     exercisesByCategory["pecho"]!!.take(2),
@@ -42,9 +45,9 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Martes - Piernas y Glúteos",
                 description = "Desarrollo de masa muscular en tren inferior",
-                imageUri = "",
+                imageUri = getExerciseImage(5),
                 exerciseIds = combineExercises(
-                    listOf(5, 12), // Peso muerto, Sentadillas
+                    listOf(5, 12),
                     exercisesByCategory["piernas"]!!.take(3)
                 ),
                 userId = userId
@@ -52,9 +55,9 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Miércoles - Espalda y Bíceps",
                 description = "Fortalecimiento de espalda y brazos",
-                imageUri = "",
+                imageUri = getExerciseImage(10),
                 exerciseIds = combineExercises(
-                    listOf(10), // Dominadas
+                    listOf(10),
                     exercisesByCategory["espalda"]!!.take(3),
                     exercisesByCategory["brazos"]!!.filter { it in listOf(17, 46) }
                 ),
@@ -63,7 +66,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Jueves - Descanso Activo",
                 description = "Cardio ligero y movilidad",
-                imageUri = "",
+                imageUri = getExerciseImage(21),
                 exerciseIds = combineExercises(
                     exercisesByCategory["cardio_bajo"]!!.take(2),
                     exercisesByCategory["core_basico"]!!.take(2)
@@ -73,7 +76,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Viernes - Hombros y Core",
                 description = "Desarrollo de hombros y fortalecimiento del core",
-                imageUri = "",
+                imageUri = getExerciseImage(24),
                 exerciseIds = combineExercises(
                     exercisesByCategory["hombros"]!!.take(3),
                     exercisesByCategory["core_basico"]!!.take(2)
@@ -83,9 +86,9 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Sábado - Full Body",
                 description = "Rutina completa de cuerpo entero",
-                imageUri = "",
+                imageUri = getExerciseImage(1),
                 exerciseIds = combineExercises(
-                    listOf(1, 12, 4, 15), // Flexiones, Sentadillas, Remo, Press militar
+                    listOf(1, 12, 4, 15),
                     exercisesByCategory["funcional"]!!.take(2)
                 ),
                 userId = userId
@@ -93,7 +96,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Domingo - Descanso",
                 description = "Estiramientos y movilidad",
-                imageUri = "",
+                imageUri = getExerciseImage(42),
                 exerciseIds = combineExercises(
                     exercisesByCategory["bajo_impacto"]!!.take(3)
                 ),
@@ -102,12 +105,12 @@ class RoutineGenerator {
         )
     }
 
-    private fun generateRoutinesForNormal(userId: Int): List<RoutineEntity> {
+    private suspend fun generateRoutinesForNormal(userId: Int): List<RoutineEntity> {
         return listOf(
             RoutineEntity(
                 name = "Lunes - Fuerza Upper",
                 description = "Entrenamiento de fuerza para tren superior",
-                imageUri = "",
+                imageUri = getExerciseImage(1),
                 exerciseIds = combineExercises(
                     exercisesByCategory["fuerza_basica"]!!.take(2),
                     exercisesByCategory["pecho"]!!.take(1),
@@ -118,7 +121,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Martes - Cardio HIIT",
                 description = "Cardio de alta intensidad",
-                imageUri = "",
+                imageUri = getExerciseImage(13),
                 exerciseIds = combineExercises(
                     exercisesByCategory["cardio_intenso"]!!.take(3),
                     exercisesByCategory["core_basico"]!!.take(2)
@@ -128,9 +131,9 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Miércoles - Fuerza Lower",
                 description = "Entrenamiento de piernas y glúteos",
-                imageUri = "",
+                imageUri = getExerciseImage(12),
                 exerciseIds = combineExercises(
-                    listOf(5, 12), // Peso muerto, Sentadillas
+                    listOf(5, 12),
                     exercisesByCategory["piernas"]!!.take(3)
                 ),
                 userId = userId
@@ -138,7 +141,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Jueves - Cardio Moderado",
                 description = "Cardio de intensidad moderada",
-                imageUri = "",
+                imageUri = getExerciseImage(21),
                 exerciseIds = combineExercises(
                     exercisesByCategory["cardio_bajo"]!!.take(2),
                     exercisesByCategory["funcional"]!!.take(2)
@@ -148,7 +151,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Viernes - Push/Pull",
                 description = "Rutina de empuje y tracción",
-                imageUri = "",
+                imageUri = getExerciseImage(32),
                 exerciseIds = combineExercises(
                     exercisesByCategory["pecho"]!!.take(2),
                     exercisesByCategory["hombros"]!!.take(1),
@@ -159,7 +162,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Sábado - Funcional",
                 description = "Entrenamiento funcional completo",
-                imageUri = "",
+                imageUri = getExerciseImage(39),
                 exerciseIds = combineExercises(
                     exercisesByCategory["funcional"]!!.take(3),
                     exercisesByCategory["core_avanzado"]!!.take(2)
@@ -169,7 +172,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Domingo - Movilidad",
                 description = "Recuperación y estiramientos",
-                imageUri = "",
+                imageUri = getExerciseImage(42),
                 exerciseIds = combineExercises(
                     exercisesByCategory["bajo_impacto"]!!.take(3)
                 ),
@@ -178,13 +181,12 @@ class RoutineGenerator {
         )
     }
 
-    // Rutinas para sobrepeso - Enfoque en pérdida de grasa
-    private fun generateRoutinesForOverweight(userId: Int): List<RoutineEntity> {
+    private suspend fun generateRoutinesForOverweight(userId: Int): List<RoutineEntity> {
         return listOf(
             RoutineEntity(
                 name = "Lunes - HIIT Total Body",
                 description = "Rutina de alta intensidad para quemar grasa",
-                imageUri = "",
+                imageUri = getExerciseImage(13), // Burpees
                 exerciseIds = combineExercises(
                     exercisesByCategory["cardio_intenso"]!!.take(3),
                     exercisesByCategory["funcional"]!!.take(2)
@@ -194,7 +196,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Martes - Fuerza + Cardio",
                 description = "Combinación de fuerza y cardio",
-                imageUri = "",
+                imageUri = getExerciseImage(1),
                 exerciseIds = combineExercises(
                     exercisesByCategory["fuerza_basica"]!!.take(2),
                     exercisesByCategory["cardio_bajo"]!!.take(2),
@@ -205,7 +207,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Miércoles - HIIT Inferior",
                 description = "HIIT enfocado en tren inferior",
-                imageUri = "",
+                imageUri = getExerciseImage(18),
                 exerciseIds = combineExercises(
                     listOf(18, 51), // Jump Squats, Jump Lunges
                     exercisesByCategory["piernas"]!!.take(2),
@@ -216,7 +218,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Jueves - Circuito Metabólico",
                 description = "Circuito para acelerar metabolismo",
-                imageUri = "",
+                imageUri = getExerciseImage(39),
                 exerciseIds = combineExercises(
                     exercisesByCategory["funcional"]!!.take(3),
                     exercisesByCategory["core_basico"]!!.take(2)
@@ -226,9 +228,9 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Viernes - HIIT Superior",
                 description = "HIIT para tren superior",
-                imageUri = "",
+                imageUri = getExerciseImage(13),
                 exerciseIds = combineExercises(
-                    listOf(13, 14), // Burpees, Mountain Climbers
+                    listOf(13, 14),
                     exercisesByCategory["pecho"]!!.take(1),
                     exercisesByCategory["cardio_intenso"]!!.take(2)
                 ),
@@ -237,7 +239,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Sábado - Cardio + Core",
                 description = "Cardio intenso con trabajo de core",
-                imageUri = "",
+                imageUri = getExerciseImage(21),
                 exerciseIds = combineExercises(
                     exercisesByCategory["cardio_bajo"]!!.take(2),
                     exercisesByCategory["core_avanzado"]!!.take(3)
@@ -247,7 +249,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Domingo - Recuperación Activa",
                 description = "Movimiento suave para recuperación",
-                imageUri = "",
+                imageUri = getExerciseImage(42),
                 exerciseIds = combineExercises(
                     exercisesByCategory["bajo_impacto"]!!.take(3)
                 ),
@@ -256,13 +258,12 @@ class RoutineGenerator {
         )
     }
 
-    // Rutinas para obesidad - Bajo impacto, progresivo
-    private fun generateRoutinesForObese(userId: Int): List<RoutineEntity> {
+    private suspend fun generateRoutinesForObese(userId: Int): List<RoutineEntity> {
         return listOf(
             RoutineEntity(
                 name = "Lunes - Inicio Suave",
                 description = "Rutina de bajo impacto para comenzar",
-                imageUri = "",
+                imageUri = getExerciseImage(42),
                 exerciseIds = combineExercises(
                     exercisesByCategory["bajo_impacto"]!!.take(3),
                     exercisesByCategory["maquinas"]!!.take(2)
@@ -272,7 +273,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Martes - Cardio Ligero",
                 description = "Cardio de baja intensidad",
-                imageUri = "",
+                imageUri = getExerciseImage(21),
                 exerciseIds = combineExercises(
                     exercisesByCategory["cardio_bajo"]!!.take(2),
                     exercisesByCategory["core_basico"]!!.take(2)
@@ -282,7 +283,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Miércoles - Fuerza Máquinas",
                 description = "Fortalecimiento con máquinas",
-                imageUri = "",
+                imageUri = getExerciseImage(33),
                 exerciseIds = combineExercises(
                     exercisesByCategory["maquinas"]!!,
                     exercisesByCategory["bajo_impacto"]!!.take(2)
@@ -292,7 +293,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Jueves - Movilidad",
                 description = "Mejora de flexibilidad y movilidad",
-                imageUri = "",
+                imageUri = getExerciseImage(57),
                 exerciseIds = combineExercises(
                     exercisesByCategory["bajo_impacto"]!!.take(4)
                 ),
@@ -301,9 +302,9 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Viernes - Funcional Básico",
                 description = "Movimientos funcionales básicos",
-                imageUri = "",
+                imageUri = getExerciseImage(1),
                 exerciseIds = combineExercises(
-                    listOf(1, 12), // Flexiones modificadas, Sentadillas
+                    listOf(1, 12),
                     exercisesByCategory["bajo_impacto"]!!.take(3)
                 ),
                 userId = userId
@@ -311,7 +312,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Sábado - Cardio + Fuerza",
                 description = "Combinación suave de cardio y fuerza",
-                imageUri = "",
+                imageUri = getExerciseImage(21),
                 exerciseIds = combineExercises(
                     exercisesByCategory["cardio_bajo"]!!.take(2),
                     exercisesByCategory["maquinas"]!!.take(2)
@@ -321,7 +322,7 @@ class RoutineGenerator {
             RoutineEntity(
                 name = "Domingo - Descanso Activo",
                 description = "Movimiento muy suave y estiramientos",
-                imageUri = "",
+                imageUri = getExerciseImage(42),
                 exerciseIds = combineExercises(
                     exercisesByCategory["bajo_impacto"]!!.take(3)
                 ),
@@ -334,10 +335,21 @@ class RoutineGenerator {
         return exerciseLists.flatMap { it }.joinToString(",")
     }
 
+    private suspend fun getExerciseImage(exerciseId: Int): String {
+        return try {
+            val dao = MainActivity.database.trackFitDao()
+            val exercise = dao.getExerciseById(exerciseId)
+            exercise?.imageUri ?: ""
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ""
+        }
+    }
+
     companion object {
-        suspend fun generateAndSaveRoutines(imc: Double, genero: String, userId: Int) {
+        suspend fun generateAndSaveRoutines(imc: Double,userId: Int) {
             val routineGenerator = RoutineGenerator()
-            val weeklyRoutines = routineGenerator.generateWeeklyRoutines(imc, genero, userId)
+            val weeklyRoutines = routineGenerator.generateWeeklyRoutines(imc,userId)
 
             weeklyRoutines.forEach { routine ->
                 Service.insertRoutineToApi(routine)
@@ -345,7 +357,3 @@ class RoutineGenerator {
         }
     }
 }
-
-
-
-
