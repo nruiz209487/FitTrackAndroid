@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -19,6 +21,7 @@ import com.example.fittrack.entity.ExerciseLogEntity
 import com.example.fittrack.ui.ui_elements.NavBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import com.example.fittrack.database.TrackFitDao
@@ -26,12 +29,14 @@ import com.example.fittrack.service.Service
 import com.example.fittrack.ui.ui_elements.SearchBarComposable
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import com.example.fittrack.type_converters.formatGlobalTimestamp
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * Pagina que muestra los registros de ejercicios
+ * Pagina que muestra los registros de ejercicios y permite crear nuevos
  */
 @Composable
 fun ExerciseLogsPage(
@@ -41,7 +46,15 @@ fun ExerciseLogsPage(
     var searchQuery by remember { mutableStateOf("") }
     var logToDelete by remember { mutableStateOf<ExerciseLogEntity?>(null) }
     var isDeleting by remember { mutableStateOf(false) }
-    //filtro de la barar de busqueda
+
+    // Estados para crear nuevo registro
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var weightText by remember { mutableStateOf("") }
+    var repsText by remember { mutableStateOf("") }
+    var isSaving by remember { mutableStateOf(false) }
+    var showSavedMessage by remember { mutableStateOf(false) }
+
+    //filtro de la barra de busqueda
     val filteredLogs = remember(searchQuery, allLogs) {
         val logs = if (searchQuery.isBlank()) allLogs
         else allLogs.filter { log ->
@@ -53,6 +66,7 @@ fun ExerciseLogsPage(
             formatGlobalTimestamp(log.date)
         }
     }
+
     //basicamente ordena los logs por fecha
     val groupedLogs = remember(filteredLogs) {
         filteredLogs.groupBy { log ->
@@ -74,8 +88,28 @@ fun ExerciseLogsPage(
         refreshLogs() // actualiza la lista
     }
 
+    // Espera
+    LaunchedEffect(showSavedMessage) {
+        if (showSavedMessage) {
+            delay(3000)
+            showSavedMessage = false
+        }
+    }
+
     Scaffold(
-        bottomBar = { NavBar(navController = navController) }
+        bottomBar = { NavBar(navController = navController) },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showCreateDialog = true },
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Agregar registro",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -90,6 +124,32 @@ fun ExerciseLogsPage(
             )
 
             Spacer(Modifier.height(16.dp))
+
+            // mesaje guardado
+            if (showSavedMessage) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            "✅ ¡Registro creado correctamente!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -149,6 +209,104 @@ fun ExerciseLogsPage(
             }
         }
     }
+
+    //  crear nuevo log
+    if (showCreateDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                if (!isSaving) {
+                    showCreateDialog = false
+                    weightText = ""
+                    repsText = ""
+                }
+            },
+            title = { Text("Nuevo Registro") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = weightText,
+                        onValueChange = {
+                            weightText = it.filter { char -> char.isDigit() || char == '.' }
+                        },
+                        label = { Text("Peso (kg)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isSaving
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = repsText,
+                        onValueChange = {
+                            repsText = it.filter { char -> char.isDigit() }
+                        },
+                        label = { Text("Repeticiones") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isSaving
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (weightText.isNotEmpty() && repsText.isNotEmpty()) {
+                            isSaving = true
+                            val log = ExerciseLogEntity(
+                                exerciseId = exerciseId,
+                                date = LocalDate.now().format(DateTimeFormatter.ISO_DATE),
+                                weight = weightText.toFloatOrNull() ?: 0f,
+                                reps = repsText.toIntOrNull() ?: 0
+                            )
+
+                            MainScope().launch {
+                                Service.insertExerciseLogToApi(log)
+                                refreshLogs()
+                                isSaving = false
+                                showCreateDialog = false
+                                weightText = ""
+                                repsText = ""
+                                showSavedMessage = true
+                            }
+                        }
+                    },
+                    enabled = weightText.isNotEmpty() && repsText.isNotEmpty() && !isSaving
+                ) {
+                    if (isSaving) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("Guardando...")
+                        }
+                    } else {
+                        Text("Guardar")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        if (!isSaving) {
+                            showCreateDialog = false
+                            weightText = ""
+                            repsText = ""
+                        }
+                    },
+                    enabled = !isSaving
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
     //elimina un log
     if (logToDelete != null) {
         AlertDialog(
@@ -197,7 +355,7 @@ fun ExerciseLogsPage(
 }
 
 /**
- * Composable para mostar un solo log
+ * Composable para mostrar un solo log
  */
 @Composable
 private fun LogItemCard(log: ExerciseLogEntity, onDelete: (ExerciseLogEntity) -> Unit) {
@@ -263,7 +421,9 @@ private fun LogItemCard(log: ExerciseLogEntity, onDelete: (ExerciseLogEntity) ->
 
                 if (log.date.isNotEmpty()) {
                     Text(
-                        text = formatGlobalTimestamp(log.date),
+                        text = formatGlobalTimestamp(log.date).format(
+                            DateTimeFormatter.ofPattern("dd/MM/yyyy")
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -282,7 +442,7 @@ private fun LogItemCard(log: ExerciseLogEntity, onDelete: (ExerciseLogEntity) ->
 }
 
 /**
- * En caaso de que no tenag logs asociados
+ * si no hay logs se meustras esto
  */
 @Composable
 private fun EmptyLogsState() {
@@ -301,7 +461,7 @@ private fun EmptyLogsState() {
             textAlign = TextAlign.Center
         )
         Text(
-            text = "Comienza a agregar registros para ver tu progreso",
+            text = "Toca el botón + para agregar tu primer registro",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

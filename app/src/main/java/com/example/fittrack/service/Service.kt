@@ -12,6 +12,9 @@ import com.example.fittrack.entity.TargetLocationEntity
 import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.service.utils.TokenManager
 
+/**
+ * Service que maneja tanto la bd como la api y me sirve para concentar el manejo de la vista con lo bd y la api de manera controlada
+ */
 object Service {
     /**
      *  Intenta loguear, y si falla, registra al usuario
