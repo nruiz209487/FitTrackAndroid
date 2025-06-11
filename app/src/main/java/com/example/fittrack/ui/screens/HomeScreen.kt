@@ -36,7 +36,6 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(navController: NavController) {
-
     var currentUser by remember { mutableStateOf<UserEntity?>(null) }
     var allRoutines by remember { mutableStateOf<List<RoutineEntity>>(emptyList()) }
     var filteredRoutines by remember { mutableStateOf<List<RoutineEntity>>(emptyList()) }
@@ -135,7 +134,8 @@ fun HomeScreen(navController: NavController) {
                     }
                 )
             }
-        }}
+        }
+    }
 
     if (routineToDelete != null) {
         AlertDialog(
@@ -157,7 +157,7 @@ fun HomeScreen(navController: NavController) {
                 TextButton(
                     onClick = {
                         coroutineScope.launch {
-                            routineToDelete?.let { Service.deleteRoutine( it) }
+                            routineToDelete?.let { Service.deleteRoutine(it) }
                             loadRoutines()
                             routineToDelete = null
                         }

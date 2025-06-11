@@ -29,7 +29,6 @@ fun LoginScreen(navController: NavController) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val scope = rememberCoroutineScope()
-
     var mail by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -73,7 +72,8 @@ fun LoginScreen(navController: NavController) {
                     Service.insertExercisesFromApi()
                     if (existingUser?.gender.isNullOrEmpty() ||
                         existingUser?.height == null ||
-                        existingUser.weight == null) {
+                        existingUser.weight == null
+                    ) {
                         navController.navigate("user_data")
                     } else {
                         navController.navigate("home")
@@ -86,7 +86,7 @@ fun LoginScreen(navController: NavController) {
             } catch (e: Exception) {
                 isLoading = false
                 Toast.makeText(
-                    context, "Error de conexión: ${e.message}", Toast.LENGTH_LONG
+                    context, "Error de conexión", Toast.LENGTH_LONG
                 ).show()
                 Log.e("API", "Error al hacer petición a la API", e)
             }
@@ -131,7 +131,8 @@ fun LoginScreen(navController: NavController) {
                 enabled = !isLoading,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val icon =
+                        if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(imageVector = icon, contentDescription = "Toggle password visibility")
                     }
@@ -154,7 +155,8 @@ fun LoginScreen(navController: NavController) {
                     enabled = !isLoading,
                     visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
-                        val icon = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        val icon =
+                            if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                         IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                             Icon(
                                 imageVector = icon,
@@ -207,14 +209,15 @@ fun LoginScreen(navController: NavController) {
                                     isLoading = false
                                     Toast.makeText(
                                         context,
-                                        "Error: ${task.exception?.message}",
+                                        "Error de autenticacion",
                                         Toast.LENGTH_LONG
                                     ).show()
                                     Log.e("Login", "Error en inicio de sesión", task.exception)
                                 }
                             }
                     } else {
-                        Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT)
+                            .show()
                     }
                 },
                 enabled = !isLoading,
@@ -235,7 +238,8 @@ fun LoginScreen(navController: NavController) {
                         if (mail.isNotEmpty() && password.isNotEmpty()) {
                             showConfirmPassword = true
                         } else {
-                            Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     } else {
                         if (password != confirmPassword) {
@@ -264,7 +268,7 @@ fun LoginScreen(navController: NavController) {
                                             } else {
                                                 Toast.makeText(
                                                     context,
-                                                    "Error al enviar verificación: ${verifyTask.exception?.message}",
+                                                    "Error al enviar verificación",
                                                     Toast.LENGTH_LONG
                                                 ).show()
                                             }

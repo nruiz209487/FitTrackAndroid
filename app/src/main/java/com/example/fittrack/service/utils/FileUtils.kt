@@ -13,7 +13,6 @@ object FileUtils {
         if (!directory.exists()) {
             directory.mkdirs()
         }
-
         val file = File(directory, "user_profile_${System.currentTimeMillis()}.jpg")
         val outputStream = FileOutputStream(file)
 

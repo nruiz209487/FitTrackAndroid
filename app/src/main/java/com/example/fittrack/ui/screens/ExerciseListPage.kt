@@ -26,16 +26,26 @@ import com.example.fittrack.ui.ui_elements.SearchBarComposable
 fun ExerciseListPage(
     navController: NavController
 ) {
-    var exercises by remember { mutableStateOf<List<ExerciseEntity>>(emptyList()) }
+    var exercisesWithLogs by remember { mutableStateOf<List<ExerciseWithLogCount>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
     val dao = MainActivity.database.trackFitDao()
 
     LaunchedEffect(Unit) {
-        exercises = dao.getExercises()
+        val exercises = dao.getExercises()
+
+        val exercisesWithLogCount = exercises.map { exercise ->
+            val logCount = dao.getExerciseLogsById(exercise.id).size
+            ExerciseWithLogCount(exercise, logCount)
+        }
+
+        exercisesWithLogs = exercisesWithLogCount.sortedWith(
+            compareByDescending<ExerciseWithLogCount> { it.logCount }
+                .thenBy { it.exercise.name }
+        )
     }
 
-    val filteredExercises = exercises.filter { exercise ->
-        exercise.name.contains(searchQuery, ignoreCase = true)
+    val filteredExercises = exercisesWithLogs.filter { exerciseWithLog ->
+        exerciseWithLog.exercise.name.contains(searchQuery, ignoreCase = true)
     }
 
     Scaffold(
@@ -47,7 +57,7 @@ fun ExerciseListPage(
                 .padding(innerPadding)
                 .padding(2.dp)
         ) {
-            if (exercises.isEmpty()) {
+            if (exercisesWithLogs.isEmpty()) {
                 Text(
                     text = "No hay ejercicios disponibles.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -72,7 +82,10 @@ fun ExerciseListPage(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        items(filteredExercises) { exercise ->
+                        items(filteredExercises) { exerciseWithLog ->
+                            val exercise = exerciseWithLog.exercise
+                            val logCount = exerciseWithLog.logCount
+
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -82,21 +95,68 @@ fun ExerciseListPage(
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    AsyncImage(
-                                        model = ImageRequest.Builder(LocalContext.current)
-                                            .data(exercise.imageUri).crossfade(true).build(),
-                                        contentDescription = exercise.name,
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(120.dp)
-                                    )
-                                    Text(
-                                        text = exercise.name,
-                                        style = MaterialTheme.typography.titleSmall,
+                                    Box {
+                                        AsyncImage(
+                                            model = ImageRequest.Builder(LocalContext.current)
+                                                .data(exercise.imageUri).crossfade(true).build(),
+                                            contentDescription = exercise.name,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(120.dp)
+                                        )
+
+                                        if (logCount > 0) {
+                                            Card(
+                                                modifier = Modifier
+                                                    .align(Alignment.TopEnd)
+                                                    .padding(8.dp),
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = MaterialTheme.colorScheme.primary
+                                                ),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(
+                                                    text = logCount.toString(),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onPrimary,
+                                                    modifier = Modifier.padding(
+                                                        horizontal = 6.dp,
+                                                        vertical = 2.dp
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Column(
                                         modifier = Modifier.padding(8.dp),
-                                        textAlign = TextAlign.Center
-                                    )
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = exercise.name,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            textAlign = TextAlign.Center
+                                        )
+
+                                        if (logCount > 0) {
+                                            Text(
+                                                text = "$logCount registro${if (logCount != 1) "s" else ""}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        } else {
+                                            Text(
+                                                text = "Sin registros",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                    alpha = 0.7f
+                                                ),
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -106,3 +166,8 @@ fun ExerciseListPage(
         }
     }
 }
+
+data class ExerciseWithLogCount(
+    val exercise: ExerciseEntity,
+    val logCount: Int
+)

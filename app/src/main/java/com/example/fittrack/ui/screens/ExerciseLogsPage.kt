@@ -26,7 +26,7 @@ import com.example.fittrack.service.Service
 import com.example.fittrack.ui.ui_elements.SearchBarComposable
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import java.time.LocalDate
+import com.example.fittrack.type_converters.formatGlobalTimestamp
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -47,17 +47,17 @@ fun ExerciseLogsPage(
                     log.reps.toString().contains(searchQuery, ignoreCase = true)
         }
         logs.sortedByDescending { log ->
-            parseLogDate(log.date)
+            formatGlobalTimestamp(log.date)
         }
     }
 
     val groupedLogs = remember(filteredLogs) {
         filteredLogs.groupBy { log ->
-            val date = parseLogDate(log.date)
+            val date = formatGlobalTimestamp(log.date)
             date.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()))
                 .replaceFirstChar { it.uppercase() }
         }.toList().sortedByDescending { (_, logs) ->
-            logs.maxOfOrNull { parseLogDate(it.date) }
+            logs.maxOfOrNull { formatGlobalTimestamp(it.date) }
         }
     }
 
@@ -95,7 +95,9 @@ fun ExerciseLogsPage(
                 if (groupedLogs.isEmpty()) {
                     item {
                         Box(
-                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             if (allLogs.isEmpty()) {
@@ -111,11 +113,12 @@ fun ExerciseLogsPage(
                 } else {
                     groupedLogs.forEach { (monthYear, logs) ->
                         item {
-                            // Cabecera del mes/año
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                                        alpha = 0.3f
+                                    )
                                 ),
                                 shape = RoundedCornerShape(8.dp)
                             ) {
@@ -135,7 +138,6 @@ fun ExerciseLogsPage(
                                 }
                             }
                         }
-
                         items(logs) { log ->
                             LogItemCard(log = log, onDelete = { logToDelete = it })
                         }
@@ -145,7 +147,6 @@ fun ExerciseLogsPage(
         }
     }
 
-    // Diálogo de confirmación para eliminar
     if (logToDelete != null) {
         AlertDialog(
             onDismissRequest = { logToDelete = null },
@@ -256,7 +257,7 @@ private fun LogItemCard(log: ExerciseLogEntity, onDelete: (ExerciseLogEntity) ->
 
                 if (log.date.isNotEmpty()) {
                     Text(
-                        text = formatLogDate(log.date),
+                        text = formatGlobalTimestamp(log.date),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -297,35 +298,5 @@ private fun EmptyLogsState() {
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp)
         )
-    }
-}
-
-private fun parseLogDate(dateString: String): LocalDate {
-    return try {
-        when {
-            dateString.contains("/") -> {
-                val parts = dateString.split("/")
-                if (parts.size == 3) {
-                    LocalDate.of(parts[2].toInt(), parts[1].toInt(), parts[0].toInt())
-                } else {
-                    LocalDate.now()
-                }
-            }
-            dateString.contains("-") -> {
-                LocalDate.parse(dateString)
-            }
-            else -> LocalDate.now()
-        }
-    } catch (e: Exception) {
-        LocalDate.now()
-    }
-}
-
-private fun formatLogDate(dateString: String): String {
-    return try {
-        val date = parseLogDate(dateString)
-        date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-    } catch (e: Exception) {
-        dateString
     }
 }

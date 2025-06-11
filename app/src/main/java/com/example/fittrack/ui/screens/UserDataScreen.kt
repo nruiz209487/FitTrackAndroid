@@ -56,7 +56,6 @@ fun UserDataScreen(navController: NavController) {
     var editedGender by remember { mutableStateOf("") }
     var editedHeight by remember { mutableStateOf("") }
     var editedWeight by remember { mutableStateOf("") }
-
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmNewPassword by remember { mutableStateOf("") }
@@ -64,13 +63,11 @@ fun UserDataScreen(navController: NavController) {
     var currentPasswordVisible by remember { mutableStateOf(false) }
     var newPasswordVisible by remember { mutableStateOf(false) }
     var confirmNewPasswordVisible by remember { mutableStateOf(false) }
-
     var isLoading by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
     var isFirstTimeSetup by remember { mutableStateOf(false) }
-
     val context = LocalContext.current
     val dao = MainActivity.database.trackFitDao()
     val scope = rememberCoroutineScope()
@@ -148,7 +145,8 @@ fun UserDataScreen(navController: NavController) {
             try {
                 val firebaseUser = auth.currentUser
                 if (firebaseUser != null && firebaseUser.email != null) {
-                    val credential = EmailAuthProvider.getCredential(firebaseUser.email!!, currentPassword)
+                    val credential =
+                        EmailAuthProvider.getCredential(firebaseUser.email!!, currentPassword)
 
                     firebaseUser.reauthenticate(credential)
                         .addOnSuccessListener {
@@ -434,7 +432,9 @@ fun UserDataScreen(navController: NavController) {
                                     shape = RoundedCornerShape(12.dp),
                                     visualTransformation = if (currentPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                                     trailingIcon = {
-                                        IconButton(onClick = { currentPasswordVisible = !currentPasswordVisible }) {
+                                        IconButton(onClick = {
+                                            currentPasswordVisible = !currentPasswordVisible
+                                        }) {
                                             Icon(
                                                 imageVector = if (currentPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                                                 contentDescription = "Toggle password visibility"
@@ -454,7 +454,9 @@ fun UserDataScreen(navController: NavController) {
                                     shape = RoundedCornerShape(12.dp),
                                     visualTransformation = if (newPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                                     trailingIcon = {
-                                        IconButton(onClick = { newPasswordVisible = !newPasswordVisible }) {
+                                        IconButton(onClick = {
+                                            newPasswordVisible = !newPasswordVisible
+                                        }) {
                                             Icon(
                                                 imageVector = if (newPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                                                 contentDescription = "Toggle password visibility"
@@ -474,7 +476,9 @@ fun UserDataScreen(navController: NavController) {
                                     shape = RoundedCornerShape(12.dp),
                                     visualTransformation = if (confirmNewPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                                     trailingIcon = {
-                                        IconButton(onClick = { confirmNewPasswordVisible = !confirmNewPasswordVisible }) {
+                                        IconButton(onClick = {
+                                            confirmNewPasswordVisible = !confirmNewPasswordVisible
+                                        }) {
                                             Icon(
                                                 imageVector = if (confirmNewPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                                                 contentDescription = "Toggle password visibility"

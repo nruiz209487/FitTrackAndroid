@@ -37,11 +37,6 @@ import java.util.Locale
 fun CreateNewTargetLocation(navController: NavHostController) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-
-    val fusedLocationClient = remember {
-        LocationServices.getFusedLocationProviderClient(context)
-    }
-
     var showSuccessDialog by remember { mutableStateOf(false) }
     var showErrorDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
@@ -53,11 +48,12 @@ fun CreateNewTargetLocation(navController: NavHostController) {
     var radius by remember { mutableStateOf(TextFieldValue("200.0")) }
     var radiusError by remember { mutableStateOf<String?>(null) }
     var showValidationError by remember { mutableStateOf(false) }
-
     val locationPermissionState = rememberPermissionState(
         android.Manifest.permission.ACCESS_FINE_LOCATION
     )
-
+    val fusedLocationClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(37.4220541, -122.0853242), 12f)
     }
@@ -90,10 +86,12 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                     radiusError = "Radio debe ser mayor que 0"
                     return false
                 }
+
                 r > 10000 -> {
                     radiusError = "Radio demasiado grande (máx. 10km)"
                     return false
                 }
+
                 else -> {
                     radiusError = null
                     return true
@@ -239,7 +237,13 @@ fun CreateNewTargetLocation(navController: NavHostController) {
 
                     selectedLocation?.let { loc ->
                         Text(
-                            text = "Coordenadas: ${String.format(Locale.US, "%.6f", loc.latitude)}, ${String.format(Locale.US, "%.6f", loc.longitude)}",
+                            text = "Coordenadas: ${
+                                String.format(
+                                    Locale.US,
+                                    "%.6f",
+                                    loc.latitude
+                                )
+                            }, ${String.format(Locale.US, "%.6f", loc.longitude)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -315,7 +319,19 @@ fun CreateNewTargetLocation(navController: NavHostController) {
 
                         if (selectedLocation != null) {
                             Text(
-                                text = "Coordenadas: ${String.format(Locale.US, "%.6f", selectedLocation!!.latitude)}, ${String.format(Locale.US, "%.6f", selectedLocation!!.longitude)}",
+                                text = "Coordenadas: ${
+                                    String.format(
+                                        Locale.US,
+                                        "%.6f",
+                                        selectedLocation!!.latitude
+                                    )
+                                }, ${
+                                    String.format(
+                                        Locale.US,
+                                        "%.6f",
+                                        selectedLocation!!.longitude
+                                    )
+                                }",
                                 style = MaterialTheme.typography.bodySmall
                             )
                         } else {
@@ -360,7 +376,6 @@ fun CreateNewTargetLocation(navController: NavHostController) {
 
                 Button(
                     onClick = {
-                        // Resetear errores previos
                         showValidationError = false
                         radiusError = null
 
@@ -418,7 +433,6 @@ fun CreateNewTargetLocation(navController: NavHostController) {
         }
     }
 
-    // Diálogo de éxito
     if (showSuccessDialog) {
         AlertDialog(
             onDismissRequest = {
@@ -440,7 +454,6 @@ fun CreateNewTargetLocation(navController: NavHostController) {
         )
     }
 
-    // Diálogo de error
     if (showErrorDialog) {
         AlertDialog(
             onDismissRequest = { showErrorDialog = false },

@@ -23,35 +23,30 @@ fun IMCScreen(navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope()
     val dao = MainActivity.database.trackFitDao()
     var user by remember { mutableStateOf<UserEntity?>(null) }
-
     val genderOptions = listOf("Masculino", "Femenino", "Otro")
-
-    var genero by remember { mutableStateOf("") }
-    var altura by remember { mutableStateOf(TextFieldValue("")) }
-    var peso by remember { mutableStateOf(TextFieldValue("")) }
-    var mostrarResultado by remember { mutableStateOf(false) }
-    var rutinasGeneradas by remember { mutableStateOf(false) }
-    var generandoRutinas by remember { mutableStateOf(false) }
-    var mostrarPopupRutinas by remember { mutableStateOf(false) }
-
+    var gender by remember { mutableStateOf("") }
+    var height by remember { mutableStateOf(TextFieldValue("")) }
+    var weight by remember { mutableStateOf(TextFieldValue("")) }
+    var showResults by remember { mutableStateOf(false) }
+    var generatedRoutines by remember { mutableStateOf(false) }
+    var generateRoutines by remember { mutableStateOf(false) }
+    var popUpRoutines by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         user = dao.getUser()
     }
 
-
     LaunchedEffect(user) {
         user?.let {
-            genero = it.gender ?: ""
-            altura = TextFieldValue(it.height?.toString() ?: "")
-            peso = TextFieldValue(it.weight?.toString() ?: "")
+            gender = it.gender ?: ""
+            height = TextFieldValue(it.height?.toString() ?: "")
+            weight = TextFieldValue(it.weight?.toString() ?: "")
         }
     }
 
-
-    if (mostrarPopupRutinas) {
+    if (popUpRoutines) {
         AlertDialog(
-            onDismissRequest = { mostrarPopupRutinas = false },
+            onDismissRequest = { popUpRoutines = false },
             icon = {
                 Icon(
                     imageVector = Icons.Default.Check,
@@ -85,7 +80,7 @@ fun IMCScreen(navController: NavHostController) {
             },
             confirmButton = {
                 TextButton(
-                    onClick = { mostrarPopupRutinas = false }
+                    onClick = { popUpRoutines = false }
                 ) {
                     Text("Entendido")
                 }
@@ -105,14 +100,14 @@ fun IMCScreen(navController: NavHostController) {
         ) {
             val imc = remember {
                 derivedStateOf {
-                    if (altura.text.isNotBlank() && peso.text.isNotBlank()) {
-                        (peso.text.toDouble() / altura.text.toDouble().pow(2)) *
-                                if (genero == "Masculino") 1.0 else 0.95
+                    if (height.text.isNotBlank() && weight.text.isNotBlank()) {
+                        (weight.text.toDouble() / height.text.toDouble().pow(2)) *
+                                if (gender == "Masculino") 1.0 else 0.95
                     } else 0.0
                 }
             }
 
-            val (clasificacion, recomendacion) = remember(imc.value, genero) {
+            val (clasificacion, recomendacion) = remember(imc.value, gender) {
                 when {
                     imc.value == 0.0 -> Pair("", "")
                     imc.value < 18.5 -> Pair(
@@ -122,6 +117,7 @@ fun IMCScreen(navController: NavHostController) {
                                 "• Ejercicios compuestos\n" +
                                 "• Superávit calórico"
                     )
+
                     imc.value < 25 -> Pair(
                         "Peso normal",
                         "Rutina de mantenimiento:\n" +
@@ -129,6 +125,7 @@ fun IMCScreen(navController: NavHostController) {
                                 "• 2 días cardio\n" +
                                 "• Dieta equilibrada"
                     )
+
                     imc.value < 30 -> Pair(
                         "Sobrepeso",
                         "Rutina para pérdida de grasa:\n" +
@@ -136,6 +133,7 @@ fun IMCScreen(navController: NavHostController) {
                                 "• Entrenamiento de fuerza\n" +
                                 "• Déficit calórico"
                     )
+
                     else -> Pair(
                         "Obesidad",
                         "Rutina inicial:\n" +
@@ -161,9 +159,9 @@ fun IMCScreen(navController: NavHostController) {
             ) {
                 genderOptions.forEach { option ->
                     FilterChip(
-                        selected = genero == option,
+                        selected = gender == option,
                         onClick = {
-                            genero = if (genero == option) {
+                            gender = if (gender == option) {
                                 ""
                             } else {
                                 option
@@ -175,7 +173,7 @@ fun IMCScreen(navController: NavHostController) {
                 }
             }
 
-            if (genero.isEmpty()) {
+            if (gender.isEmpty()) {
                 Text(
                     text = "Género: No especificado",
                     style = MaterialTheme.typography.bodySmall,
@@ -183,15 +181,15 @@ fun IMCScreen(navController: NavHostController) {
                 )
             } else {
                 Text(
-                    text = "Género seleccionado: $genero",
+                    text = "Género seleccionado: $gender",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
 
             OutlinedTextField(
-                value = altura,
-                onValueChange = { altura = it },
+                value = height,
+                onValueChange = { height = it },
                 label = { Text("Altura (m)") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -199,8 +197,8 @@ fun IMCScreen(navController: NavHostController) {
             )
 
             OutlinedTextField(
-                value = peso,
-                onValueChange = { peso = it },
+                value = weight,
+                onValueChange = { weight = it },
                 label = { Text("Peso (kg)") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -209,46 +207,46 @@ fun IMCScreen(navController: NavHostController) {
 
             Button(
                 onClick = {
-                    mostrarResultado = true
+                    showResults = true
                     coroutineScope.launch {
                         user?.let {
                             val updatedUser = it.copy(
-                                gender = genero.ifEmpty { null },
-                                height = altura.text.toDoubleOrNull(),
-                                weight = peso.text.toDoubleOrNull()
+                                gender = gender.ifEmpty { null },
+                                height = height.text.toDoubleOrNull(),
+                                weight = weight.text.toDoubleOrNull()
                             )
                             dao.updateUser(updatedUser)
                         }
 
-                        if (imc.value > 0 && !rutinasGeneradas) {
-                            generandoRutinas = true
+                        if (imc.value > 0 && !generatedRoutines) {
+                            generateRoutines = true
                             try {
                                 val userId = user?.id ?: 1
                                 RoutineGenerator.generateAndSaveRoutines(imc.value, userId)
-                                rutinasGeneradas = true
-                                mostrarPopupRutinas = true
+                                generatedRoutines = true
+                                popUpRoutines = true
                             } catch (e: Exception) {
                                 e.printStackTrace()
                             } finally {
-                                generandoRutinas = false
+                                generateRoutines = false
                             }
                         }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = altura.text.isNotBlank() && peso.text.isNotBlank()
+                enabled = height.text.isNotBlank() && weight.text.isNotBlank()
             ) {
-                if (generandoRutinas) {
+                if (generateRoutines) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text(if (generandoRutinas) "Generando rutinas..." else "Calcular IMC")
+                Text(if (generateRoutines) "Generando rutinas..." else "Calcular IMC")
             }
 
-            if (mostrarResultado && imc.value > 0) {
+            if (showResults && imc.value > 0) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -259,14 +257,18 @@ fun IMCScreen(navController: NavHostController) {
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Tu IMC: ${"%.1f".format(imc.value)}",
-                            style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            "Tu IMC: ${"%.1f".format(imc.value)}",
+                            style = MaterialTheme.typography.titleLarge
+                        )
                         Text("Clasificación: $clasificacion")
 
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-                        Text("Recomendaciones:",
-                            style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Recomendaciones:",
+                            style = MaterialTheme.typography.titleMedium
+                        )
                         Text(recomendacion)
                     }
                 }

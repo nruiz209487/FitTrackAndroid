@@ -11,8 +11,11 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
-object ApiClient  {
-    suspend fun updateUser(userId: Int, user: Request.UserUpdateRequest): Request.UserUpdateResponse {
+object ApiClient {
+    suspend fun updateUser(
+        userId: Int,
+        user: Request.UserUpdateRequest
+    ): Request.UserUpdateResponse {
         val response = retrofitService.updateUser(userId, user)
         if (response.isSuccessful) {
             return response.body() ?: throw Exception("Empty response body")
@@ -20,6 +23,7 @@ object ApiClient  {
             throw Exception("Update failed: ${response.errorBody()?.string()}")
         }
     }
+
     private const val BASE_URL = "http://10.0.2.2:8000"
 
     private val httpClient = OkHttpClient.Builder()
@@ -51,7 +55,10 @@ object ApiClient  {
             if (response.isSuccessful) {
                 response.body()
             } else {
-                Log.e("API_CLIENT", "Error al obtener usuario: ${response.code()} - ${response.message()}")
+                Log.e(
+                    "API_CLIENT",
+                    "Error al obtener usuario: ${response.code()} - ${response.message()}"
+                )
                 val errorBody = response.errorBody()?.string()
                 Log.e("API_CLIENT", "Error body: $errorBody")
                 null
@@ -61,6 +68,7 @@ object ApiClient  {
             null
         }
     }
+
     suspend fun registerUser(user: UserRegistrationRequest): RegisterUserResponse {
         val response = retrofitService.registerUser(user)
         if (response.isSuccessful) {
@@ -69,8 +77,12 @@ object ApiClient  {
             throw Exception("Registration failed: ${response.errorBody()?.string()}")
         }
     }
-    suspend fun insertTargetLocation(userId: Int, testLocation: Request.TargetLocationRequest): Any {
-        val response = retrofitService.insertTargetLocation(userId,testLocation)
+
+    suspend fun insertTargetLocation(
+        userId: Int,
+        testLocation: Request.TargetLocationRequest
+    ): Any {
+        val response = retrofitService.insertTargetLocation(userId, testLocation)
         if (response.isSuccessful) {
             return response.body() ?: throw Exception("Empty response body")
         } else {
@@ -97,6 +109,7 @@ object ApiClient  {
             null
         }
     }
+
     suspend fun deleteNote(noteId: Int, userId: Int): Any? {
         val response = retrofitService.deleteNote(userId, noteId)
         return if (response.isSuccessful) {
@@ -128,7 +141,7 @@ object ApiClient  {
         }
     }
 
-    suspend  fun insertNote(testNote: NoteEntity, userId: Int): Any {
+    suspend fun insertNote(testNote: NoteEntity, userId: Int): Any {
         val response = retrofitService.insertNote(userId, testNote)
         if (response.isSuccessful) {
             return response.body() ?: throw Exception("Empty response body")
@@ -137,23 +150,27 @@ object ApiClient  {
         }
     }
 
-     suspend fun getExercises(): List<ExerciseEntity> {
+    suspend fun getExercises(): List<ExerciseEntity> {
         val response = retrofitService.getExercises()
         return response.body().orEmpty()
-   }
-     suspend fun getTargetLocations(userId: Int): List<TargetLocationEntity> {
+    }
+
+    suspend fun getTargetLocations(userId: Int): List<TargetLocationEntity> {
         val response = retrofitService.getTargetLocations(userId)
         return response.body().orEmpty()
     }
-     suspend fun getRoutines(userId: Int): List<RoutineEntity> {
+
+    suspend fun getRoutines(userId: Int): List<RoutineEntity> {
         val response = retrofitService.getRoutines(userId)
         return response.body().orEmpty()
     }
-     suspend fun getNotes(userId: Int): List<NoteEntity> {
+
+    suspend fun getNotes(userId: Int): List<NoteEntity> {
         val response = retrofitService.getNotes(userId)
         return response.body().orEmpty()
     }
-     suspend fun getExerciseLogs(userId: Int): List<ExerciseLogEntity> {
+
+    suspend fun getExerciseLogs(userId: Int): List<ExerciseLogEntity> {
         val response = retrofitService.getExerciseLogs(userId)
         return response.body().orEmpty()
     }
@@ -168,6 +185,4 @@ object ApiClient  {
             null
         }
     }
-
-
 }

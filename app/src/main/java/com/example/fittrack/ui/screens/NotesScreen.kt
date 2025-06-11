@@ -39,6 +39,7 @@ import com.example.fittrack.database.TrackFitDao
 import com.example.fittrack.service.Service
 import com.example.fittrack.ui.helpers.NotificationCreator
 import java.util.Locale
+import com.example.fittrack.type_converters.formatGlobalTimestamp
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -64,17 +65,17 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                     it.text.contains(searchQuery, true)
         }
         notes.sortedByDescending { note ->
-            extractDateFromTimestamp(note.timestamp)
+            formatGlobalTimestamp(note.timestamp)
         }
     }
 
     val groupedNotes = remember(filteredNotes) {
         filteredNotes.groupBy { note ->
-            val date = extractDateFromTimestamp(note.timestamp)
+            val date = formatGlobalTimestamp(note.timestamp)
             date.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()))
                 .replaceFirstChar { it.uppercase() }
         }.toList().sortedByDescending { (_, notes) ->
-            notes.maxOfOrNull { extractDateFromTimestamp(it.timestamp) }
+            notes.maxOfOrNull { formatGlobalTimestamp(it.timestamp) }
         }
     }
 
@@ -120,7 +121,6 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
             )
             Spacer(Modifier.height(16.dp))
 
-            // Lista de notas
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.weight(1f)
@@ -146,7 +146,9 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                 if (groupedNotes.isEmpty()) {
                     item {
                         Box(
-                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -159,11 +161,12 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                 } else {
                     groupedNotes.forEach { (monthYear, notes) ->
                         item {
-                            // Cabecera del mes/año
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                                        alpha = 0.3f
+                                    )
                                 ),
                                 shape = RoundedCornerShape(8.dp)
                             ) {
@@ -232,7 +235,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
 @Composable
 fun NoteCard(note: NoteEntity, onDelete: (NoteEntity) -> Unit) {
     val hasNotification = note.timestamp.startsWith("NOTIFICATION:")
-    val displayTime = formatTimestamp(note.timestamp)
+    val displayTime = formatGlobalTimestamp(note.timestamp)
 
     Card(
         modifier = Modifier
@@ -390,7 +393,10 @@ fun NoteInputForm(
                         onClick = { showDatePicker = true },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(selectedDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "Fecha")
+                        Text(
+                            selectedDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                                ?: "Fecha"
+                        )
                     }
                     OutlinedButton(
                         onClick = { showTimePicker = true },
@@ -462,7 +468,12 @@ fun NoteInputForm(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        selectedTime = String.format(Locale.getDefault(), "%02d:%02d", timePickerState.hour, timePickerState.minute)
+                        selectedTime = String.format(
+                            Locale.getDefault(),
+                            "%02d:%02d",
+                            timePickerState.hour,
+                            timePickerState.minute
+                        )
                         showTimePicker = false
                     }
                 ) { Text("OK") }
@@ -474,15 +485,6 @@ fun NoteInputForm(
     }
 }
 
-private fun extractDateFromTimestamp(timestamp: String): LocalDate {
-    return if (timestamp.startsWith("NOTIFICATION:")) {
-        val dateTimeString = timestamp.removePrefix("NOTIFICATION:")
-        val dateTime = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-        dateTime.toLocalDate()
-    } else {
-        LocalDate.parse(timestamp, DateTimeFormatter.ISO_DATE)
-    }
-}
 
 private fun saveNote(
     dao: TrackFitDao,
@@ -521,16 +523,5 @@ private fun saveNote(
             }
         }
         onComplete()
-    }
-}
-
-private fun formatTimestamp(timestamp: String): String {
-    return if (timestamp.startsWith("NOTIFICATION:")) {
-        val dateTimeString = timestamp.removePrefix("NOTIFICATION:")
-        val dateTime = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-        "Recordatorio: ${dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}"
-    } else {
-        val date = LocalDate.parse(timestamp, DateTimeFormatter.ISO_DATE)
-        date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
     }
 }

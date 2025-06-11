@@ -38,7 +38,6 @@ fun CreateRoutinePage(navController: NavController) {
     var routineDescription by remember { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
-
     val dao = MainActivity.database.trackFitDao()
 
     LaunchedEffect(Unit) {
@@ -54,10 +53,11 @@ fun CreateRoutinePage(navController: NavController) {
             TopAppBar(
                 title = { Text("Crear Rutina") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigate("home") {
-                        popUpTo("create_routine") { inclusive = true }
-                        launchSingleTop = true
-                    }
+                    IconButton(onClick = {
+                        navController.navigate("home") {
+                            popUpTo("create_routine") { inclusive = true }
+                            launchSingleTop = true
+                        }
                     }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
@@ -235,6 +235,7 @@ fun ExerciseSelectionCard(
         }
     }
 }
+
 private fun saveRoutine(
     routineName: String,
     routineDescription: String,

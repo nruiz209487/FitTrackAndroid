@@ -123,6 +123,7 @@ fun ProfileScreen(navController: NavController) {
         }
     }
 }
+
 @Composable
 private fun ProfileHeaderSection(user: UserEntity?) {
     Card(
@@ -142,7 +143,7 @@ private fun ProfileHeaderSection(user: UserEntity?) {
         ) {
             ProfileImage(
                 imageUrl = user?.profileImage,
-                modifier = Modifier.size(180.dp) // Cambiado de 120.dp a 180.dp
+                modifier = Modifier.size(180.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
 

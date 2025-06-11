@@ -37,8 +37,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.*
 
-
-
 @OptIn(ExperimentalPermissionsApi::class)
 @SuppressLint("MissingPermission")
 @Composable
@@ -350,4 +348,5 @@ fun MapPage(navController: NavController) {
                 }
             }
         }
-    }}
+    }
+}
