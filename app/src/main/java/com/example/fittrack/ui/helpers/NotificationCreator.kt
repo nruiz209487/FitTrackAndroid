@@ -19,23 +19,33 @@ import com.example.fittrack.service.NotificationService
 import java.time.LocalDateTime
 import java.time.ZoneId
 
+/**
+ * Objeto que maneja la creación de notificaciones
+ */
 object NotificationCreator {
 
     private const val TAG = "NotificationCreator"
-    private const val CHANNEL_ID = "fittrack_notes_channel"
+    const val CHANNEL_ID = "fittrack_notes_channel"
     private const val CHANNEL_NAME = "Recordatorios de Notas"
+    private const val CHANNEL_DESCRIPTION = "Recordatorios de notas y eventos"
 
+    /**
+     * Verifica si el usuario ha otorgado permisos de notificación
+     */
     fun hasNotificationPermission(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
                 context,
-               Manifest.permission.POST_NOTIFICATIONS
+                Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         } else {
             NotificationManagerCompat.from(context).areNotificationsEnabled()
         }
     }
 
+    /**
+     * Programa una notificación para mostrarse en un momento específico
+     */
     @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
     fun scheduleNotification(
         context: Context,
@@ -80,6 +90,9 @@ object NotificationCreator {
         }
     }
 
+    /**
+     * Cancela una notificación previamente programada
+     */
     fun cancelNotification(context: Context, notificationId: Int): Boolean {
         return try {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -93,6 +106,7 @@ object NotificationCreator {
 
             alarmManager.cancel(pendingIntent)
             pendingIntent.cancel()
+
             val notificationManager = NotificationManagerCompat.from(context)
             notificationManager.cancel(notificationId)
 
@@ -104,6 +118,9 @@ object NotificationCreator {
         }
     }
 
+    /**
+     * Crea el Intent que se enviará cuando la notificación sea activada
+     */
     private fun createNotificationIntent(
         context: Context,
         notificationId: Int,
@@ -124,13 +141,13 @@ object NotificationCreator {
         }
     }
 
+    /**
+     * Crea el canal de notificación (obligatorio desde Android 8)
+     */
     private fun createNotificationChannel(context: Context) {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            CHANNEL_NAME,
-            NotificationManager.IMPORTANCE_DEFAULT
-        ).apply {
-            description = "Recordatorios de notas y eventos"
+        val importance = NotificationManager.IMPORTANCE_HIGH
+        val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
+            description = CHANNEL_DESCRIPTION
             enableLights(true)
             enableVibration(true)
             setShowBadge(true)

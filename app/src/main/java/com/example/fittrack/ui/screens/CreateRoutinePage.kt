@@ -29,6 +29,9 @@ import com.example.fittrack.ui.ui_elements.SearchBarComposable
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
+/**
+ * Pagina para crear nuvas rutinas
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateRoutinePage(navController: NavController) {
@@ -43,7 +46,7 @@ fun CreateRoutinePage(navController: NavController) {
     LaunchedEffect(Unit) {
         exercises = dao.getExercises()
     }
-
+    // para el buscador
     val filteredExercises = exercises.filter { exercise ->
         exercise.name.contains(searchQuery, ignoreCase = true)
     }
@@ -103,6 +106,7 @@ fun CreateRoutinePage(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // este es el Searchbar.kt
             SearchBarComposable(
                 query = searchQuery,
                 onQueryChange = { searchQuery = it },
@@ -119,7 +123,7 @@ fun CreateRoutinePage(navController: NavController) {
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-
+            // en caso de que no haya ejercicios
             if (exercises.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No hay ejercicios disponibles", textAlign = TextAlign.Center)
@@ -149,7 +153,7 @@ fun CreateRoutinePage(navController: NavController) {
             }
         }
     }
-
+    //comfirmacion
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
@@ -191,6 +195,9 @@ fun CreateRoutinePage(navController: NavController) {
     }
 }
 
+/**
+ * Composable para mostar cada ejercicio y selecionarlo se muestarn el nombre y la imagen
+ */
 @Composable
 fun ExerciseSelectionCard(
     exercise: ExerciseEntity,
@@ -236,6 +243,9 @@ fun ExerciseSelectionCard(
     }
 }
 
+/**
+ * Guarda la rutina
+ */
 private fun saveRoutine(
     routineName: String,
     routineDescription: String,
@@ -256,7 +266,7 @@ private fun saveRoutine(
 
     MainScope().launch {
         try {
-            Service.insertRoutineToApi(routine)
+            Service.insertRoutineToApi(routine) // solcitud a service
         } finally {
             onComplete()
         }

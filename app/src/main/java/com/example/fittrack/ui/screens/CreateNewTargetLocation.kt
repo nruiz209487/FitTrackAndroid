@@ -30,7 +30,9 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.launch
 import java.util.Locale
-
+/**
+ * Pagina que sirve para crear una nueva locaizacion esta integrada con maps
+ */
 @OptIn(ExperimentalPermissionsApi::class)
 @SuppressLint("MissingPermission")
 @Composable
@@ -43,21 +45,24 @@ fun CreateNewTargetLocation(navController: NavHostController) {
     var isLoading by remember { mutableStateOf(false) }
     var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
-    var showMapSelector by remember { mutableStateOf(false) }
+    var showMapSelector by remember { mutableStateOf(false) } // booleano que le dice a la vista si mostrar el maapa o el formualrio
     var name by remember { mutableStateOf(TextFieldValue("")) }
     var radius by remember { mutableStateOf(TextFieldValue("200.0")) }
     var radiusError by remember { mutableStateOf<String?>(null) }
     var showValidationError by remember { mutableStateOf(false) }
+    //persmiso localizacion
     val locationPermissionState = rememberPermissionState(
         android.Manifest.permission.ACCESS_FINE_LOCATION
     )
+    //localizacion
     val fusedLocationClient = remember {
         LocationServices.getFusedLocationProviderClient(context)
     }
+    //camara
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(37.4220541, -122.0853242), 12f)
     }
-
+    //funcion que obtine la localizacion actual
     fun getCurrentLocation() {
         if (locationPermissionState.status.isGranted) {
             val cancellationToken = CancellationTokenSource()
@@ -78,7 +83,7 @@ fun CreateNewTargetLocation(navController: NavHostController) {
             }
         }
     }
-
+    //validacion del radio para la lacalizacion
     fun validateRadius(): Boolean {
         radius.text.toDoubleOrNull()?.let { r ->
             when {
@@ -111,7 +116,7 @@ fun CreateNewTargetLocation(navController: NavHostController) {
         }
     }
 
-    if (showMapSelector) {
+    if (showMapSelector) { // mapa
         Box(modifier = Modifier.fillMaxSize()) {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
@@ -134,7 +139,7 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                 }
             ) {
                 userLocation?.let { loc ->
-                    Marker(
+                    Marker( //marcador con la poscision del usuario
                         state = MarkerState(position = loc),
                         title = "Tu ubicación",
                         snippet = "Estás aquí"
@@ -142,7 +147,7 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                 }
 
                 selectedLocation?.let { loc ->
-                    Marker(
+                    Marker( // marcador con la localizacion selecioanda
                         state = MarkerState(position = loc),
                         title = "Ubicación seleccionada",
                         snippet = "Toca 'Confirmar' para usar esta ubicación"
@@ -271,7 +276,7 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                 }
             }
         }
-    } else {
+    } else { //formualrio
         Scaffold(
             bottomBar = { NavBar(navController) }
         ) { padding ->

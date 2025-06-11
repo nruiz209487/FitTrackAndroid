@@ -4,6 +4,21 @@ import com.example.fittrack.service.Service
 import com.example.fittrack.MainActivity
 
 class RoutineGenerator {
+    /**
+     * Genera las rutinas y las guarda en la db
+     */
+    companion object {
+        suspend fun generateAndSaveRoutines(imc: Double,userId: Int) {
+            val routineGenerator = RoutineGenerator()
+            val weeklyRoutines = routineGenerator.generateWeeklyRoutines(imc,userId) // pasa el imc para selecionar rutinas
+
+            weeklyRoutines.forEach { routine ->
+                Service.insertRoutineToApi(routine)
+            }
+        }
+    }
+
+    //Listados de ejercicios
     private val exercisesByCategory = mapOf(
         "fuerza_basica" to listOf(1, 3, 5, 10, 12, 15, 17),
         "cardio_bajo" to listOf(21, 29, 41, 61),
@@ -20,6 +35,9 @@ class RoutineGenerator {
         "bajo_impacto" to listOf(42, 53, 57, 82, 115, 119)
     )
 
+    /**
+     * Llama a x funcion dependiendo del ic
+     */
     suspend fun generateWeeklyRoutines(imc: Double, userId: Int): List<RoutineEntity> {
         return when {
             imc < 18.5 -> generateRoutinesForUnderweight(userId)
@@ -29,6 +47,9 @@ class RoutineGenerator {
         }
     }
 
+    /**
+     * Rutinas para peso pluma
+     */
     private suspend fun generateRoutinesForUnderweight(userId: Int): List<RoutineEntity> {
         return listOf(
             RoutineEntity(
@@ -104,7 +125,9 @@ class RoutineGenerator {
             )
         )
     }
-
+    /**
+     * Rutinas para peso noraml
+     */
     private suspend fun generateRoutinesForNormal(userId: Int): List<RoutineEntity> {
         return listOf(
             RoutineEntity(
@@ -181,6 +204,9 @@ class RoutineGenerator {
         )
     }
 
+    /**
+     * Rutinas para sobrpeso
+     */
     private suspend fun generateRoutinesForOverweight(userId: Int): List<RoutineEntity> {
         return listOf(
             RoutineEntity(
@@ -257,7 +283,9 @@ class RoutineGenerator {
             )
         )
     }
-
+    /**
+     * Rutinas para obesidad
+     */
     private suspend fun generateRoutinesForObese(userId: Int): List<RoutineEntity> {
         return listOf(
             RoutineEntity(
@@ -330,11 +358,16 @@ class RoutineGenerator {
             )
         )
     }
-
+    /**
+     * combian ejercicios
+     */
     private fun combineExercises(vararg exerciseLists: List<Int>): String {
         return exerciseLists.flatMap { it }.joinToString(",")
     }
 
+    /**
+     * simplemente coje la imagen de un ejercico para ponersela a al rutina
+     */
     private suspend fun getExerciseImage(exerciseId: Int): String {
         return try {
             val dao = MainActivity.database.trackFitDao()
@@ -343,17 +376,6 @@ class RoutineGenerator {
         } catch (e: Exception) {
             e.printStackTrace()
             ""
-        }
-    }
-
-    companion object {
-        suspend fun generateAndSaveRoutines(imc: Double,userId: Int) {
-            val routineGenerator = RoutineGenerator()
-            val weeklyRoutines = routineGenerator.generateWeeklyRoutines(imc,userId)
-
-            weeklyRoutines.forEach { routine ->
-                Service.insertRoutineToApi(routine)
-            }
         }
     }
 }

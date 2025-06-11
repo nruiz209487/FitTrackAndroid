@@ -41,6 +41,9 @@ import com.example.fittrack.ui.helpers.NotificationCreator
 import java.util.Locale
 import com.example.fittrack.type_converters.formatGlobalTimestamp
 
+/**
+ * Pagina que meustra y crea notas
+ */
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun NotesScreen(navController: NavController, dao: TrackFitDao) {
@@ -57,7 +60,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
     ) { isGranted ->
         hasNotificationPermission = isGranted
     }
-
+    // Filtro barra busqueda
     val filteredNotes = remember(searchQuery, allNotes) {
         val notes = if (searchQuery.isBlank()) allNotes
         else allNotes.filter {
@@ -78,7 +81,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
             notes.maxOfOrNull { formatGlobalTimestamp(it.timestamp) }
         }
     }
-
+    // refresca notas
     fun refreshNotes() {
         MainScope().launch { allNotes = dao.getNotes() }
     }
@@ -86,6 +89,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
     LaunchedEffect(Unit) {
         refreshNotes()
         hasNotificationPermission = NotificationCreator.hasNotificationPermission(context)
+        // compreuaba el permiso de notificacion
         if (!hasNotificationPermission) {
             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
@@ -98,6 +102,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                 .padding(padding)
                 .padding(16.dp)
         ) {
+            //Si no tiene persmios los pides
             if (!hasNotificationPermission) {
                 Button(
                     onClick = { permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
@@ -113,7 +118,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                     Text("Activar notificaciones")
                 }
             }
-
+            //  SearchBar.kt
             SearchBarComposable(
                 query = searchQuery,
                 onQueryChange = { searchQuery = it },
@@ -142,7 +147,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                         )
                     }
                 }
-
+                // si hay notas vacias
                 if (groupedNotes.isEmpty()) {
                     item {
                         Box(
@@ -159,6 +164,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
                         }
                     }
                 } else {
+                    // cartas de notas
                     groupedNotes.forEach { (monthYear, notes) ->
                         item {
                             Card(
@@ -205,7 +211,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
             }
         }
     }
-
+//elimianr nota
     noteToDelete?.let { note ->
         AlertDialog(
             onDismissRequest = { noteToDelete = null },
@@ -231,7 +237,7 @@ fun NotesScreen(navController: NavController, dao: TrackFitDao) {
         )
     }
 }
-
+//carta de nota
 @Composable
 fun NoteCard(note: NoteEntity, onDelete: (NoteEntity) -> Unit) {
     val hasNotification = note.timestamp.startsWith("NOTIFICATION:")
@@ -310,6 +316,9 @@ fun NoteCard(note: NoteEntity, onDelete: (NoteEntity) -> Unit) {
     }
 }
 
+/**
+ * Formulario para crea runa nueva ota
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteInputForm(
@@ -438,7 +447,7 @@ fun NoteInputForm(
             }
         }
     }
-
+//selcionador de fecha
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -459,7 +468,7 @@ fun NoteInputForm(
             DatePicker(datePickerState)
         }
     }
-
+//selcionador de timpo
     if (showTimePicker) {
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
@@ -484,7 +493,7 @@ fun NoteInputForm(
         )
     }
 }
-
+// funcion que guarda una nota
 
 private fun saveNote(
     dao: TrackFitDao,

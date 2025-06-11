@@ -4,6 +4,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+/**
+ * Funcion que uso para las coversiones de fechas en el codigo
+ */
 fun formatGlobalTimestamp(input: String): String {
     return try {
         when {
@@ -14,7 +17,6 @@ fun formatGlobalTimestamp(input: String): String {
             }
 
             input.contains("/") -> {
-                // formato dd/MM/yyyy
                 val parts = input.split("/")
                 if (parts.size == 3) {
                     val date = LocalDate.of(parts[2].toInt(), parts[1].toInt(), parts[0].toInt())
@@ -23,7 +25,6 @@ fun formatGlobalTimestamp(input: String): String {
             }
 
             input.contains("-") -> {
-                // formato ISO yyyy-MM-dd
                 val date = LocalDate.parse(input, DateTimeFormatter.ISO_DATE)
                 date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
             }

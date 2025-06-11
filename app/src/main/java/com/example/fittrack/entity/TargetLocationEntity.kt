@@ -3,7 +3,9 @@ package com.example.fittrack.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.android.gms.maps.model.LatLng
-
+/**
+ * Entidad Localizacion objetivo
+ */
 @Entity(tableName = "target_location_table")
 data class TargetLocationEntity(
     @PrimaryKey(autoGenerate = true)

@@ -12,6 +12,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 
+/**
+ * Compsoabke de la barra de busqueda
+ */
 @Composable
 fun SearchBarComposable(
     query: String,

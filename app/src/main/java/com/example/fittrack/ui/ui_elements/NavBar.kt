@@ -34,7 +34,9 @@ sealed class NavItem(
     data object Notes : NavItem("notes", R.string.notes, Icons.Filled.Book)
     data object Profile : NavItem("profile", R.string.profile, Icons.Filled.Person)
 }
-
+/**
+ * Barra de navegacion esta en todas las paginas
+ */
 @Composable
 fun NavBar(navController: NavController) {
     val items = listOf(NavItem.Home, NavItem.ExerciseList, NavItem.Notes, NavItem.Profile)

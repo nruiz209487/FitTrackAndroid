@@ -9,6 +9,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.fittrack.ui.ui_elements.NavBar
 
+/***
+ * Pagina simple que maneja el cambio de tema
+ */
 @Composable
 fun SettingsScreen(
     navController: NavController,

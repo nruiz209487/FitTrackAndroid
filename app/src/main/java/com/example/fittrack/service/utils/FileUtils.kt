@@ -6,6 +6,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 
+/**
+ * La fucnion de FileUtils es permitir al usuario cojer una imagen de usario local
+ */
 object FileUtils {
     fun copyUriToInternalStorage(context: Context, uri: Uri): String {
         val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
@@ -21,7 +24,6 @@ object FileUtils {
                 input.copyTo(output)
             }
         }
-
         return file.absolutePath
     }
 }

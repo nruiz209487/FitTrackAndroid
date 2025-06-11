@@ -22,6 +22,17 @@ import com.example.fittrack.entity.ExerciseEntity
 import com.example.fittrack.ui.ui_elements.NavBar
 import com.example.fittrack.ui.ui_elements.SearchBarComposable
 
+/**
+ *Clase para poder contar los logs relacionados lo hago aqui ya que a la api no  seirve de nada y son menos marrones en el cambio de datos
+ */
+data class ExerciseWithLogCount(
+    val exercise: ExerciseEntity,
+    val logCount: Int
+)
+
+/**
+ * Simplemente una lisat de los ejercicios apra acceder a sus logs
+ */
 @Composable
 fun ExerciseListPage(
     navController: NavController
@@ -32,18 +43,18 @@ fun ExerciseListPage(
 
     LaunchedEffect(Unit) {
         val exercises = dao.getExercises()
-
+        //covierto los ejercicios a ejercicios con log counts
         val exercisesWithLogCount = exercises.map { exercise ->
             val logCount = dao.getExerciseLogsById(exercise.id).size
             ExerciseWithLogCount(exercise, logCount)
         }
-
+        //basicamente orderno los ejercicios dependiendo del la cantidad de logs y despues por nombre
         exercisesWithLogs = exercisesWithLogCount.sortedWith(
             compareByDescending<ExerciseWithLogCount> { it.logCount }
                 .thenBy { it.exercise.name }
         )
     }
-
+    // filtro de busqueda
     val filteredExercises = exercisesWithLogs.filter { exerciseWithLog ->
         exerciseWithLog.exercise.name.contains(searchQuery, ignoreCase = true)
     }
@@ -68,7 +79,7 @@ fun ExerciseListPage(
                 Column(modifier = Modifier.fillMaxSize()) {
 
                     Spacer(Modifier.height(16.dp))
-
+                    // El searchbar.kt
                     SearchBarComposable(
                         query = searchQuery,
                         onQueryChange = { searchQuery = it },
@@ -90,7 +101,7 @@ fun ExerciseListPage(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        navController.navigate("exercise_logs/${exercise.id}")
+                                        navController.navigate("exercise_logs/${exercise.id}") //navegacion paso como paremtro el id del ejercicio
                                     },
                                 shape = RoundedCornerShape(12.dp)
                             ) {
@@ -166,8 +177,3 @@ fun ExerciseListPage(
         }
     }
 }
-
-data class ExerciseWithLogCount(
-    val exercise: ExerciseEntity,
-    val logCount: Int
-)

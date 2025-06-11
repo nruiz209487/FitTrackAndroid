@@ -21,6 +21,9 @@ import com.example.fittrack.ui.theme.FitTrackTheme
 import com.example.fittrack.ui.theme_config.ThemePreferences
 import kotlinx.coroutines.launch
 
+/**
+ * Main activity para manejar el flujo de la app
+ */
 class MainActivity : ComponentActivity() {
 
     companion object {
@@ -29,7 +32,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        //base de datos
         database = Room.databaseBuilder(
             applicationContext,
             TrackFitDatabase::class.java,
@@ -44,7 +47,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val context = this@MainActivity
-            val prefs = remember { ThemePreferences(context) }
+            val prefs = remember { ThemePreferences(context) } // comprueba el tema
             val scope = rememberCoroutineScope()
             val isDarkTheme by prefs.darkModeFlow.collectAsState(initial = false)
 
@@ -53,9 +56,11 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 val user = dao.getUser()
                 if (user != null) {
+                    //si el usario esta en la db incia sesion para otener e token
                     Service.registerOrLogin(user)
                     startDestination = "home"
                 } else {
+                    //sino va a login
                     startDestination = "login"
                 }
             }

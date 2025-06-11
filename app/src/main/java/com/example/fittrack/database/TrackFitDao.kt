@@ -7,6 +7,10 @@ import com.example.fittrack.entity.NoteEntity
 import com.example.fittrack.entity.RoutineEntity
 import com.example.fittrack.entity.TargetLocationEntity
 import com.example.fittrack.entity.UserEntity
+
+/**
+ * interface para manejar el CRUD de la base de datos local
+ */
 @Dao
 interface TrackFitDao {
 
@@ -113,6 +117,7 @@ interface TrackFitDao {
     @Query("DELETE FROM target_location_table")
     suspend fun deleteAllTargetLocations()
 
+    //Borra los registros de la base de datos al cerrar sesion
     @Transaction
     suspend fun clearAllData() {
         deleteAllUsers()

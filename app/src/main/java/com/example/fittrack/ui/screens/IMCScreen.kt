@@ -18,6 +18,9 @@ import com.example.fittrack.ui.helpers.RoutineGenerator
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 
+/**
+ * IMC screen basicamente calcula el imc y le genera una rutina al usaurio dependiendo de los datos que ponga
+ */
 @Composable
 fun IMCScreen(navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope()
@@ -33,17 +36,18 @@ fun IMCScreen(navController: NavHostController) {
     var popUpRoutines by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        user = dao.getUser()
+        user = dao.getUser() // optiene los el suario
     }
 
     LaunchedEffect(user) {
+        //pasa los datos a string
         user?.let {
             gender = it.gender ?: ""
             height = TextFieldValue(it.height?.toString() ?: "")
             weight = TextFieldValue(it.weight?.toString() ?: "")
         }
     }
-
+    //pop up qeu meustra que ha ido bien
     if (popUpRoutines) {
         AlertDialog(
             onDismissRequest = { popUpRoutines = false },
@@ -107,7 +111,7 @@ fun IMCScreen(navController: NavHostController) {
                 }
             }
 
-            val (clasificacion, recomendacion) = remember(imc.value, gender) {
+            val (clasification, suggestion) = remember(imc.value, gender) {
                 when {
                     imc.value == 0.0 -> Pair("", "")
                     imc.value < 18.5 -> Pair(
@@ -261,7 +265,7 @@ fun IMCScreen(navController: NavHostController) {
                             "Tu IMC: ${"%.1f".format(imc.value)}",
                             style = MaterialTheme.typography.titleLarge
                         )
-                        Text("Clasificación: $clasificacion")
+                        Text("Clasificación: $clasification")
 
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -269,7 +273,7 @@ fun IMCScreen(navController: NavHostController) {
                             "Recomendaciones:",
                             style = MaterialTheme.typography.titleMedium
                         )
-                        Text(recomendacion)
+                        Text(suggestion)
                     }
                 }
             }

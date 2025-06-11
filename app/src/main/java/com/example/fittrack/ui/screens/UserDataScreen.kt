@@ -45,6 +45,9 @@ import kotlinx.coroutines.launch
 import java.io.File
 import androidx.core.net.toUri
 
+/**
+ * Pagina que hace como pagina de como pagina de configuaracion inical y actualizar ya se que el archvivo es muy grande y tendria que haberlo separado pero no me da tiempo a reazerlo
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDataScreen(navController: NavController) {
@@ -67,14 +70,14 @@ fun UserDataScreen(navController: NavController) {
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
-    var isFirstTimeSetup by remember { mutableStateOf(false) }
+    var isFirstTimeSetup by remember { mutableStateOf(false) } // diferencia si se accede desde login o configuracion
     val context = LocalContext.current
     val dao = MainActivity.database.trackFitDao()
     val scope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
 
-    val genderOptions = listOf("Masculino", "Femenino", "Otro")
-
+    val genderOptions = listOf("Masculino", "Femenino", "Otro") // opciones de genero
+// selecionador imagenes
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -120,7 +123,7 @@ fun UserDataScreen(navController: NavController) {
             }
         }
     }
-
+// Funcion para cambiar la contrasenya
     fun changePassword() {
         if (currentPassword.isEmpty() || newPassword.isEmpty() || confirmNewPassword.isEmpty()) {
             showError = true
@@ -217,7 +220,7 @@ fun UserDataScreen(navController: NavController) {
             }
         }
     }
-
+    //guardar el peril
     fun saveProfile() {
         if (editedName.isBlank() || editedEmail.isBlank()) {
             showError = true
@@ -568,7 +571,7 @@ fun UserDataScreen(navController: NavController) {
         }
     }
 }
-
+// selector de imagen de perfil
 @Composable
 fun ProfileImageSelector(
     selectedImageUri: Uri?,

@@ -30,6 +30,9 @@ import com.example.fittrack.type_converters.formatGlobalTimestamp
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/**
+ * Pagina que muestra los registros de ejercicios
+ */
 @Composable
 fun ExerciseLogsPage(
     exerciseId: Int, navController: NavController, dao: TrackFitDao
@@ -38,7 +41,7 @@ fun ExerciseLogsPage(
     var searchQuery by remember { mutableStateOf("") }
     var logToDelete by remember { mutableStateOf<ExerciseLogEntity?>(null) }
     var isDeleting by remember { mutableStateOf(false) }
-
+    //filtro de la barar de busqueda
     val filteredLogs = remember(searchQuery, allLogs) {
         val logs = if (searchQuery.isBlank()) allLogs
         else allLogs.filter { log ->
@@ -50,7 +53,7 @@ fun ExerciseLogsPage(
             formatGlobalTimestamp(log.date)
         }
     }
-
+    //basicamente ordena los logs por fecha
     val groupedLogs = remember(filteredLogs) {
         filteredLogs.groupBy { log ->
             val date = formatGlobalTimestamp(log.date)
@@ -68,7 +71,7 @@ fun ExerciseLogsPage(
     }
 
     LaunchedEffect(exerciseId) {
-        refreshLogs()
+        refreshLogs() // actualiza la lista
     }
 
     Scaffold(
@@ -146,7 +149,7 @@ fun ExerciseLogsPage(
             }
         }
     }
-
+    //elimina un log
     if (logToDelete != null) {
         AlertDialog(
             onDismissRequest = { logToDelete = null },
@@ -193,6 +196,9 @@ fun ExerciseLogsPage(
     }
 }
 
+/**
+ * Composable para mostar un solo log
+ */
 @Composable
 private fun LogItemCard(log: ExerciseLogEntity, onDelete: (ExerciseLogEntity) -> Unit) {
     Card(
@@ -275,6 +281,9 @@ private fun LogItemCard(log: ExerciseLogEntity, onDelete: (ExerciseLogEntity) ->
     }
 }
 
+/**
+ * En caaso de que no tenag logs asociados
+ */
 @Composable
 private fun EmptyLogsState() {
     Column(

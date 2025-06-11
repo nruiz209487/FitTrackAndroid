@@ -24,6 +24,9 @@ import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
+/**
+ * Pagina del login basicamente  verifica que auentique con fireabse y despues llama a la funcion se service loginornewuser
+ */
 @Composable
 fun LoginScreen(navController: NavController) {
     val context = LocalContext.current

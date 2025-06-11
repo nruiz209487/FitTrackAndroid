@@ -49,6 +49,7 @@ fun ProfileScreen(navController: NavController) {
     }
 
     if (showLogoutDialog) {
+        //alerta al cerrar la app
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             title = {
@@ -59,7 +60,7 @@ fun ProfileScreen(navController: NavController) {
             },
             text = {
                 Text(
-                    text = "¿Estás seguro de que quieres cerrar sesión? Se borrarán todos los datos y se cerrará la aplicación.",
+                    text = "¿Estás seguro de que quieres cerrar sesión? Se borrarán todos los datos locales y se cerrará la aplicación.",
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -123,7 +124,7 @@ fun ProfileScreen(navController: NavController) {
         }
     }
 }
-
+// header
 @Composable
 private fun ProfileHeaderSection(user: UserEntity?) {
     Card(
@@ -171,7 +172,7 @@ private fun ProfileHeaderSection(user: UserEntity?) {
         }
     }
 }
-
+// iamgen de perfil
 @Composable
 fun ProfileImage(imageUrl: String?, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -208,7 +209,7 @@ fun ProfileImage(imageUrl: String?, modifier: Modifier = Modifier) {
         }
     }
 }
-
+//secion datos del suario
 @Composable
 private fun UserMetricsSection(user: UserEntity) {
     val metrics = listOf(
@@ -226,7 +227,7 @@ private fun UserMetricsSection(user: UserEntity) {
         }
     }
 }
-
+//carta de datos
 @Composable
 private fun MetricCard(metric: MetricData) {
     Card(
@@ -342,7 +343,9 @@ private fun ActionButtonsSection(
         }
     }
 }
-
+/**
+ * composable para los botones
+ */
 @Composable
 private fun ActionButton(
     onClick: () -> Unit,
@@ -365,7 +368,7 @@ private fun ActionButton(
         Text(text = text, fontWeight = FontWeight.Medium)
     }
 }
-
+//datos del user
 data class MetricData(
     val title: String,
     val value: String,

@@ -34,6 +34,9 @@ import com.example.fittrack.service.Service
 import com.example.fittrack.ui.ui_elements.SearchBarComposable
 import kotlinx.coroutines.launch
 
+/***
+ * Pagina principal muestra las rutinas
+ */
 @Composable
 fun HomeScreen(navController: NavController) {
     var currentUser by remember { mutableStateOf<UserEntity?>(null) }
@@ -44,6 +47,7 @@ fun HomeScreen(navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     val dao = MainActivity.database.trackFitDao()
 
+    //carga las rutinas y el currentUser
     fun loadRoutines() {
         coroutineScope.launch {
             allRoutines = dao.getRoutines()
@@ -55,7 +59,7 @@ fun HomeScreen(navController: NavController) {
     LaunchedEffect(Unit) {
         loadRoutines()
     }
-
+    //filtro de la barra de busqueda
     LaunchedEffect(searchQuery, allRoutines) {
         filteredRoutines = if (searchQuery.isBlank()) {
             allRoutines
@@ -95,12 +99,13 @@ fun HomeScreen(navController: NavController) {
                 .padding(innerPadding)
                 .padding(2.dp)
         ) {
+            //barra de busqueda SearchBar.kt
             SearchBarComposable(
                 query = searchQuery,
                 onQueryChange = { searchQuery = it },
                 placeholderText = "Buscar rutinas..."
             )
-
+            //si las al flitar no hay rutinas
             if (filteredRoutines.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -127,7 +132,7 @@ fun HomeScreen(navController: NavController) {
                 RoutineGrid(
                     routines = filteredRoutines,
                     onItemClick = { routine ->
-                        navController.navigate("routine/${routine.id}")
+                        navController.navigate("routine/${routine.id}") // navega a la pagina de la rutina
                     },
                     onDeleteRoutine = { routine ->
                         routineToDelete = routine
@@ -136,7 +141,7 @@ fun HomeScreen(navController: NavController) {
             }
         }
     }
-
+    //elimina una rutina
     if (routineToDelete != null) {
         AlertDialog(
             onDismissRequest = { routineToDelete = null },
@@ -177,6 +182,9 @@ fun HomeScreen(navController: NavController) {
     }
 }
 
+/**
+ * Barra superior con el user y la racha
+ */
 @Composable
 fun UserTopBar(user: UserEntity?, onStreakClick: () -> Unit) {
     Row(
@@ -195,7 +203,7 @@ fun UserTopBar(user: UserEntity?, onStreakClick: () -> Unit) {
                 modifier = Modifier
                     .clickable(onClick = onStreakClick)
                     .padding(horizontal = 8.dp),
-                text = "${user?.streakDays} 🔥",
+                text = "${user?.streakDays} 🔥", // muestra los dias de racha
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.secondary
             )
@@ -203,6 +211,9 @@ fun UserTopBar(user: UserEntity?, onStreakClick: () -> Unit) {
     }
 }
 
+/**
+ * Imagen de peril
+ */
 @Composable
 private fun ProfileImage(imageUrl: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -231,6 +242,9 @@ private fun ProfileImage(imageUrl: String, modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * Listado de routinas
+ */
 @Composable
 fun RoutineGrid(
     routines: List<RoutineEntity>,
@@ -252,6 +266,9 @@ fun RoutineGrid(
     }
 }
 
+/**
+ * Muestra una rutina
+ */
 @Composable
 fun RoutineCard(
     routine: RoutineEntity,

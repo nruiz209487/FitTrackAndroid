@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.map
 
 val Context.dataStore by preferencesDataStore(name = "settings")
 
+/**
+ * clas eencargada de manejar el tema de la app
+ */
 class ThemePreferences(private val context: Context) {
     companion object {
         val DARK_MODE_KEY = booleanPreferencesKey("dark_mode")

@@ -45,7 +45,9 @@ import com.example.fittrack.entity.TargetLocationEntity
 import com.example.fittrack.service.Service
 import com.example.fittrack.ui.ui_elements.NavBar
 import kotlinx.coroutines.launch
-
+/***
+ * mUESTRA LAS localizaciones
+ */
 @Composable
 fun TargetLocationsScreen(navController: NavController) {
     val dao = MainActivity.database.trackFitDao()
@@ -53,7 +55,7 @@ fun TargetLocationsScreen(navController: NavController) {
     var locations by remember { mutableStateOf<List<TargetLocationEntity>>(emptyList()) }
     var locationToDelete by remember { mutableStateOf<TargetLocationEntity?>(null) }
     var isLoading by remember { mutableStateOf(false) }
-
+// reecarga la apgina
     fun refreshLocations() {
         coroutineScope.launch {
             isLoading = true
@@ -68,6 +70,7 @@ fun TargetLocationsScreen(navController: NavController) {
 
     Scaffold(
         bottomBar = { NavBar(navController) },
+        //boton para crear una nueva localizacion
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { navController.navigate("createNewTargetLocation") },
@@ -111,7 +114,7 @@ fun TargetLocationsScreen(navController: NavController) {
             }
         }
     }
-
+//elimina una notificacion
     locationToDelete?.let { location ->
         AlertDialog(
             onDismissRequest = { locationToDelete = null },
@@ -136,7 +139,7 @@ fun TargetLocationsScreen(navController: NavController) {
         )
     }
 }
-
+// carta de notificacion
 @Composable
 fun TargetLocationCard(location: TargetLocationEntity, onDelete: (TargetLocationEntity) -> Unit) {
     Card(

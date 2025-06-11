@@ -13,16 +13,47 @@ import com.example.fittrack.entity.UserEntity
 import com.example.fittrack.service.utils.TokenManager
 
 object Service {
+    /**
+     *  Intenta loguear, y si falla, registra al usuario
+     */
+    suspend fun registerOrLogin(userEntity: UserEntity): Boolean {
+        return try {
+            val loginSuccess = login(userEntity)
+
+            if (loginSuccess) {
+                Log.d("SERVICE", "Login exitoso para usuario existente")
+                true
+            } else {
+                Log.d("SERVICE", "Usuario no existe, procediendo a registrar...")
+                insertUserToApi(userEntity)
+            }
+        } catch (e: Exception) {
+            Log.e("SERVICE", "Error en registerOrLogin: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     *  Función para hacer login del usuario
+     */
     private suspend fun login(userEntity: UserEntity): Boolean {
         return try {
             val userResponse = ApiClient.getUser(userEntity.email, userEntity.password)
 
             if (userResponse != null) {
-                userResponse.token?.let { userResponse.user?.let { it1 -> TokenManager.saveUserSession(it, it1.id) } }
+                // Guarda el token
+                userResponse.token?.let {
+                    userResponse.user?.let { it1 ->
+                        TokenManager.saveUserSession(
+                            it,
+                            it1.id
+                        )
+                    }
+                }
 
                 val dao = MainActivity.database.trackFitDao()
                 val existingUser = userResponse.user?.let { dao.getUserById(it.id) }
-
+                // Si el usuario no existe localmente, lo inserta
                 if (existingUser == null) {
                     val userFromApi = userResponse.user?.let {
                         UserEntity(
@@ -41,7 +72,10 @@ object Service {
                     if (userFromApi != null) {
                         dao.insertUser(userFromApi)
                     }
-                    Log.d("LOGIN", "Usuario sincronizado localmente con ID: ${userResponse.user?.id}")
+                    Log.d(
+                        "LOGIN",
+                        "Usuario sincronizado localmente con ID: ${userResponse.user?.id}"
+                    )
                 }
 
                 Log.d("LOGIN", "Login exitoso - Token guardado, User ID: ${userResponse.user?.id}")
@@ -57,23 +91,41 @@ object Service {
         }
     }
 
-    suspend fun registerOrLogin(userEntity: UserEntity): Boolean {
-        return try {
-            val loginSuccess = login(userEntity)
+    /**
+     * Actualiza un usuario
+     */
+    suspend fun updateUserApi(userEntity: UserEntity) {
+        try {
+            val userUpdateRequest = Request.UserUpdateRequest(
+                email = userEntity.email,
+                password = userEntity.password,
+                password_confirmation = userEntity.password,
+                name = userEntity.name,
+                gender = userEntity.gender,
+                height = userEntity.height,
+                weight = userEntity.weight,
+                streakDays = userEntity.streakDays,
+                lastStreakDay = userEntity.lastStreakDay,
+                profileImage = userEntity.profileImage
+            )
 
-            if (loginSuccess) {
-                Log.d("SERVICE", "Login exitoso para usuario existente")
-                true
+            val response = ApiClient.updateUser(userEntity.id, userUpdateRequest)
+
+            if (response.success) {
+                val dao = MainActivity.database.trackFitDao()
+                dao.updateUser(userEntity)
             } else {
-                Log.d("SERVICE", "Usuario no existe, procediendo a registrar...")
-                insertUserToApi(userEntity)
+                throw Exception("API returned success=false: ${response.message}")
             }
+
         } catch (e: Exception) {
-            Log.e("SERVICE", "Error en registerOrLogin: ${e.message}")
-            false
+            throw Exception("Error updating user: ${e.message}")
         }
     }
 
+    /**
+     *  Función para hacer registro del usuario
+     */
     private suspend fun insertUserToApi(userEntity: UserEntity): Boolean {
         try {
             val testUser = UserRegistrationRequest(
@@ -89,7 +141,10 @@ object Service {
             val response = ApiClient.registerUser(testUser)
 
             if (response.success) {
-                Log.d("REGISTRATION_TEST", "Usuario registrado con éxito en API! ID: ${response.data.id}")
+                Log.d(
+                    "REGISTRATION_TEST",
+                    "Usuario registrado con éxito en API! ID: ${response.data.id}"
+                )
                 Log.d("REGISTRATION_TEST", "Token: ${response.data.token}")
                 val dao = MainActivity.database.trackFitDao()
                 val userWithApiId = userEntity.copy(
@@ -97,7 +152,10 @@ object Service {
                 )
 
                 dao.insertUser(userWithApiId)
-                Log.d("REGISTRATION_TEST", "Usuario insertado localmente con ID de API: ${response.data.id}")
+                Log.d(
+                    "REGISTRATION_TEST",
+                    "Usuario insertado localmente con ID de API: ${response.data.id}"
+                )
                 TokenManager.saveUserSession(response.data.token, response.data.id)
 
                 return true
@@ -111,6 +169,9 @@ object Service {
         }
     }
 
+    /**
+     *  Función  que se encarga de registar un TargetLocation en api y local
+     */
     suspend fun insertTargetLocationsToApi(targetLocationEntity: TargetLocationEntity): Boolean {
         val userId = TokenManager.userId
         if (userId == null) {
@@ -139,6 +200,9 @@ object Service {
         }
     }
 
+    /**
+     *  Función  que se encarga de registar un Notes en api y local
+     */
     suspend fun insertNoteToApi(testNote: NoteEntity): Boolean {
         val userId = TokenManager.userId
         if (userId == null) {
@@ -161,6 +225,9 @@ object Service {
         }
     }
 
+    /**
+     *  Función  que se encarga de registar un Routine en api y local
+     */
     suspend fun insertRoutineToApi(testRoutine: RoutineEntity): Boolean {
         val userId = TokenManager.userId
         if (userId == null) {
@@ -183,6 +250,9 @@ object Service {
         }
     }
 
+    /**
+     *  Función  que se encarga de registar un ExerciseLog en api y local
+     */
     suspend fun insertExerciseLogToApi(testExerciseLog: ExerciseLogEntity): Boolean {
         val userId = TokenManager.userId
         if (userId == null) {
@@ -205,6 +275,9 @@ object Service {
         }
     }
 
+    /**
+     *  Función  que se encarga de borrar un TargetLocation en api y local
+     */
     suspend fun deleteTargetLocationEntity(targetLocation: TargetLocationEntity): Boolean {
         val userId = TokenManager.userId
         if (userId == null) {
@@ -227,6 +300,9 @@ object Service {
         }
     }
 
+    /**
+     *  Función  que se encarga de borrar un Routine en api y local
+     */
     suspend fun deleteRoutine(routine: RoutineEntity): Boolean {
         val userId = TokenManager.userId
         if (userId == null) {
@@ -249,6 +325,9 @@ object Service {
         }
     }
 
+    /**
+     *  Función  que se encarga de borrar un Note en api y local
+     */
     suspend fun deleteNote(note: NoteEntity): Boolean {
         val userId = TokenManager.userId
         if (userId == null) {
@@ -271,6 +350,9 @@ object Service {
         }
     }
 
+    /**
+     *  Función  que se encarga de borrar un ExerciseLog en api y local
+     */
     suspend fun deleteExerciseLog(exerciseLog: ExerciseLogEntity): Boolean {
         val userId = TokenManager.userId
         if (userId == null) {
@@ -293,7 +375,9 @@ object Service {
         }
     }
 
-
+    /**
+     *  Función  que se encarga de insertar  ExerciseLogs de la api a local
+     */
     suspend fun insertLogsFromApi() {
         val dao = MainActivity.database.trackFitDao()
         TokenManager.userId?.let { userId ->
@@ -302,6 +386,9 @@ object Service {
         }
     }
 
+    /**
+     *  Función  que se encarga de insertar  Notes de la api a local
+     */
     suspend fun insertNotesFromApi() {
         val dao = MainActivity.database.trackFitDao()
         TokenManager.userId?.let { userId ->
@@ -310,6 +397,9 @@ object Service {
         }
     }
 
+    /**
+     *  Función  que se encarga de insertar  Routines de la api a local
+     */
     suspend fun insertRoutinesFromApi() {
         val dao = MainActivity.database.trackFitDao()
         TokenManager.userId?.let { userId ->
@@ -317,6 +407,10 @@ object Service {
             dao.insertRoutines(apiRoutines)
         }
     }
+
+    /**
+     *  Función  que se encarga de insertar  TargetLocations de la api a local
+     */
     suspend fun insertTargetLocationsFromApi() {
         val dao = MainActivity.database.trackFitDao()
         TokenManager.userId?.let { userId ->
@@ -324,39 +418,13 @@ object Service {
             dao.insertTargetLocations(apiTargetLocations)
         }
     }
+
+    /**
+     *  Función  que se encarga de insertar  Exercises de la api a local
+     */
     suspend fun insertExercisesFromApi() {
         val dao = MainActivity.database.trackFitDao()
         val apiExercises = ApiClient.getExercises()
         dao.insertExercises(apiExercises)
     }
-
-
-    suspend fun updateUserApi(userEntity: UserEntity) {
-        try {
-            val userUpdateRequest = Request.UserUpdateRequest(
-                email = userEntity.email,
-                password = userEntity.password,
-                password_confirmation = userEntity.password,
-                name = userEntity.name,
-                gender = userEntity.gender,
-                height = userEntity.height,
-                weight = userEntity.weight,
-                streakDays = userEntity.streakDays,
-                lastStreakDay = userEntity.lastStreakDay, // Añade esta línea
-                profileImage = userEntity.profileImage
-            )
-
-            val response = ApiClient.updateUser(userEntity.id, userUpdateRequest)
-
-            // Si la API fue exitosa, actualizar base de datos local
-            if (response.success) {
-                val dao = MainActivity.database.trackFitDao()
-                dao.updateUser(userEntity)
-            } else {
-                throw Exception("API returned success=false: ${response.message}")
-            }
-
-        } catch (e: Exception) {
-            throw Exception("Error updating user: ${e.message}")
-        }
-    }}
+}

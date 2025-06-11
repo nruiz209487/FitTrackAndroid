@@ -37,6 +37,9 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.*
 
+/**
+ * Pagina del mapa que meustra la ubicaacion objetivo y el user
+ */
 @OptIn(ExperimentalPermissionsApi::class)
 @SuppressLint("MissingPermission")
 @Composable
@@ -59,15 +62,15 @@ fun MapPage(navController: NavController) {
         targetLocations = dao.getTargetLocations()
         user = dao.getUser()
     }
-
+    //permiso de localizacion
     val locationPermissionState = rememberPermissionState(
         android.Manifest.permission.ACCESS_FINE_LOCATION
     )
-
+    //poscion de camra
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(37.4220541, -122.0853242), 12f)
     }
-
+    //funcion que calcula la distancia
     fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val earthRadius = 6371000.0
         val dLat = Math.toRadians(lat2 - lat1)
@@ -78,7 +81,7 @@ fun MapPage(navController: NavController) {
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return earthRadius * c
     }
-
+    //comprueba si el usario esta en el rango de la localizacion
     fun checkTargetLocationReached(currentLocation: LatLng) {
         targetLocations.forEach { target ->
             val distance = calculateDistance(
@@ -93,7 +96,7 @@ fun MapPage(navController: NavController) {
             }
         }
     }
-
+    //obtiene la localizazacion actual
     fun getCurrentLocation() {
         if (locationPermissionState.status.isGranted) {
             val cancellationToken = CancellationTokenSource()
@@ -116,18 +119,12 @@ fun MapPage(navController: NavController) {
             }
         }
     }
-
+    // si no tiene permiso los pide
     LaunchedEffect(locationPermissionState.status) {
         if (locationPermissionState.status.isGranted) {
             getCurrentLocation()
-        } else {
+        } else if (!locationPermissionState.status.shouldShowRationale) {
             locationPermissionState.launchPermissionRequest()
-        }
-    }
-
-    LaunchedEffect(locationPermissionState.status.isGranted) {
-        if (locationPermissionState.status.isGranted) {
-            getCurrentLocation()
         }
     }
 
@@ -241,7 +238,7 @@ fun MapPage(navController: NavController) {
             NavBar(navController = navController)
         }
     }
-
+        // pop up para cuando llega a la ubicacion
     if (showSuccessDialog && achievedLocation != null) {
         user?.let { currentUser ->
             val today = LocalDate.now()

@@ -23,6 +23,9 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+/**
+ * Página que muestra los ejercicios de una rutina y permite registrar repeticiones y peso
+ */
 @Composable
 fun RoutinePage(
     navController: NavController, routineId: Int
@@ -133,7 +136,7 @@ fun RoutinePage(
         }
     }
 }
-
+// muestra la imagen nombre y descripcin de un ejercicio
 @Composable
 private fun ExerciseCard(exercise: ExerciseEntity) {
     Card(
@@ -161,7 +164,7 @@ private fun ExerciseCard(exercise: ExerciseEntity) {
         }
     }
 }
-
+//Formulario para exercise logs
 @Composable
 private fun LogInputCard(
     current: ExerciseEntity,
@@ -231,6 +234,9 @@ private fun LogInputCard(
     }
 }
 
+/**
+ * noifica guarda un gergistro
+ */
 @Composable
 private fun SavedNoteCard() {
     Card(
@@ -254,7 +260,9 @@ private fun SavedNoteCard() {
         }
     }
 }
-
+/**
+ * Navega entr los ejercicios de una rutina compreuba que no se pase de los limites
+ */
 @Composable
 private fun NavigationButtons(
     currentIndex: Int,
@@ -282,7 +290,9 @@ private fun NavigationButtons(
         }
     }
 }
-
+/**
+ *  guarda un gergistro
+ */
 private fun saveExerciseLog(
     exerciseId: Int,
     weight: String,

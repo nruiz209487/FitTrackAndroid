@@ -2,7 +2,9 @@ package com.example.fittrack.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-
+/**
+ * Entidad Routina
+ */
 @Entity(tableName = "routine_table")
 data class RoutineEntity(
     @PrimaryKey(autoGenerate = true)
