@@ -148,6 +148,7 @@ fun MapPage(navController: NavController) {
                 tiltGesturesEnabled = true
             )
         ) {
+            //MARCA LA LOCALIZACION DEL USER
             userLocation?.let { loc ->
                 Marker(
                     state = MarkerState(position = loc),
@@ -155,7 +156,7 @@ fun MapPage(navController: NavController) {
                     snippet = "Estás aquí"
                 )
             }
-
+            //MARCA LA LOCALIZACIONES OBJETIVOS
             targetLocations.forEach { target ->
                 Marker(
                     state = MarkerState(position = target.position),
@@ -172,7 +173,7 @@ fun MapPage(navController: NavController) {
                 )
             }
         }
-
+        // permiso negado
         if (!locationPermissionState.status.isGranted && !locationPermissionState.status.shouldShowRationale) {
             Box(
                 modifier = Modifier
@@ -191,6 +192,7 @@ fun MapPage(navController: NavController) {
                 .padding(end = 16.dp, bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            //BOTON Acercar
             FloatingActionButton(
                 onClick = {
                     scope.launch {
@@ -210,7 +212,7 @@ fun MapPage(navController: NavController) {
                     contentDescription = "Acercar"
                 )
             }
-
+            //BOTON Alejar
             FloatingActionButton(
                 onClick = {
                     scope.launch {
@@ -252,20 +254,20 @@ fun MapPage(navController: NavController) {
             if (shouldUpdateStreak) {
 
                 val updatedUser = currentUser.copy(
-                    streakDays = (currentUser.streakDays ?: 0) + 1,
+                    streakDays = (currentUser.streakDays ?: 0) + 1, // LE SUMA UN DIA A AL  A RACHA
                     lastStreakDay = today.toString()
                 )
                 user = updatedUser
 
                 scope.launch {
                     try {
-                        Service.updateUserApi(updatedUser)
+                        Service.updateUserApi(updatedUser) //ACTUALIZA EL USARIO
                     } catch (e: Exception) {
                         user = currentUser
                     }
                 }
             }
-
+            //POP UP CON EL MESAJE DE YA HAS LLEGADO
             Dialog(
                 onDismissRequest = {
                     showSuccessDialog = false

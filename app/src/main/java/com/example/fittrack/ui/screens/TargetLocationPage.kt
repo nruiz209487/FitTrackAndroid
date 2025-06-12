@@ -46,16 +46,16 @@ import com.example.fittrack.service.Service
 import com.example.fittrack.ui.ui_elements.NavBar
 import kotlinx.coroutines.launch
 /***
- * mUESTRA LAS localizaciones
+ * Mustra las localizaciones
  */
 @Composable
 fun TargetLocationsScreen(navController: NavController) {
-    val dao = MainActivity.database.trackFitDao()
+    val dao = MainActivity.database.trackFitDao() // Declara la bd
     val coroutineScope = rememberCoroutineScope()
     var locations by remember { mutableStateOf<List<TargetLocationEntity>>(emptyList()) }
     var locationToDelete by remember { mutableStateOf<TargetLocationEntity?>(null) }
     var isLoading by remember { mutableStateOf(false) }
-// reecarga la apgina
+    // reecarga la apgina
     fun refreshLocations() {
         coroutineScope.launch {
             isLoading = true
@@ -139,7 +139,9 @@ fun TargetLocationsScreen(navController: NavController) {
         )
     }
 }
-// carta de notificacion
+/**
+ * carta de TargetLocation te meutsra el no,bre la ubicaicon en cordenada y te deja elimarla
+ */
 @Composable
 fun TargetLocationCard(location: TargetLocationEntity, onDelete: (TargetLocationEntity) -> Unit) {
     Card(

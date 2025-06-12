@@ -13,7 +13,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 
 /**
- * Compsoabke de la barra de busqueda
+ * Composable de la barra de busqueda se usa en mutiples paginas
  */
 @Composable
 fun SearchBarComposable(

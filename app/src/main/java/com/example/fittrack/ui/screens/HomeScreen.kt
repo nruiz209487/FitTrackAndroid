@@ -305,7 +305,7 @@ fun RoutineCard(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
                 )
-
+                //boton para eliminar
                 IconButton(
                     onClick = onDelete,
                     modifier = Modifier.align(Alignment.TopEnd)

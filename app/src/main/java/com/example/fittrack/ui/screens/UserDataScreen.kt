@@ -72,7 +72,7 @@ fun UserDataScreen(navController: NavController) {
     var expanded by remember { mutableStateOf(false) }
     var isFirstTimeSetup by remember { mutableStateOf(false) } // diferencia si se accede desde login o configuracion
     val context = LocalContext.current
-    val dao = MainActivity.database.trackFitDao()
+    val dao = MainActivity.database.trackFitDao()  // Declara la bd
     val scope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
 

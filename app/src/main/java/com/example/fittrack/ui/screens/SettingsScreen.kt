@@ -18,6 +18,7 @@ fun SettingsScreen(
     darkTheme: Boolean,
     onThemeToggle: (Boolean) -> Unit
 ) {
+    //nAVCONTROLLER
     Scaffold(
         bottomBar = { NavBar(navController = navController) }
     ) { innerPadding ->
@@ -38,7 +39,7 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = "Modo Oscuro")
-                Switch(checked = darkTheme, onCheckedChange = onThemeToggle)
+                Switch(checked = darkTheme, onCheckedChange = onThemeToggle) //cambiar tema
             }
         }
     }

@@ -23,7 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.fittrack.R
-
+/**
+ * Clase que contiene la ruta el nombre y el icono del navar
+ */
 sealed class NavItem(
     val route: String,
     val labelResId: Int,
@@ -39,7 +41,7 @@ sealed class NavItem(
  */
 @Composable
 fun NavBar(navController: NavController) {
-    val items = listOf(NavItem.Home, NavItem.ExerciseList, NavItem.Notes, NavItem.Profile)
+    val items = listOf(NavItem.Home, NavItem.ExerciseList, NavItem.Notes, NavItem.Profile) // anyado los NavItem a la lisat
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -52,6 +54,7 @@ fun NavBar(navController: NavController) {
         tonalElevation = 0.dp,
         windowInsets = androidx.compose.foundation.layout.WindowInsets(0.dp)
     ) {
+        //genera tantos como haya en la lista
         items.forEach { item ->
             NavigationBarItem(
                 modifier = Modifier.padding(horizontal = 0.dp),

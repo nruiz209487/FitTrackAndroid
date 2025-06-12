@@ -106,7 +106,7 @@ fun ExerciseListPage(
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Box {
+                                    Box {//imagen dek ejeciccio
                                         AsyncImage(
                                             model = ImageRequest.Builder(LocalContext.current)
                                                 .data(exercise.imageUri).crossfade(true).build(),
@@ -149,7 +149,7 @@ fun ExerciseListPage(
                                             style = MaterialTheme.typography.titleSmall,
                                             textAlign = TextAlign.Center
                                         )
-
+                                        //si hay logs muestra la cantidad de logs
                                         if (logCount > 0) {
                                             Text(
                                                 text = "$logCount registro${if (logCount != 1) "s" else ""}",

@@ -25,14 +25,14 @@ import kotlinx.coroutines.launch
  * Main activity para manejar el flujo de la app
  */
 class MainActivity : ComponentActivity() {
-
+    //companion object con la db
     companion object {
         lateinit var database: TrackFitDatabase
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //base de datos
+        //incializicacion base de datos
         database = Room.databaseBuilder(
             applicationContext,
             TrackFitDatabase::class.java,
@@ -47,11 +47,11 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val context = this@MainActivity
-            val prefs = remember { ThemePreferences(context) } // comprueba el tema
+            val prefs = remember { ThemePreferences(context) } // comprueba el tema para ber si lo poens a oscuro o no
             val scope = rememberCoroutineScope()
             val isDarkTheme by prefs.darkModeFlow.collectAsState(initial = false)
 
-            var startDestination by remember { mutableStateOf<String?>(null) }
+            var startDestination by remember { mutableStateOf<String?>(null) } // valor para ver si entra en el login o a home
 
             LaunchedEffect(Unit) {
                 val user = dao.getUser()

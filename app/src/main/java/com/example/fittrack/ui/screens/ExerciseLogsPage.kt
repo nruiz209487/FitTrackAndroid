@@ -155,6 +155,7 @@ fun ExerciseLogsPage(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.weight(1f)
             ) {
+                // si los losg estan vacios
                 if (groupedLogs.isEmpty()) {
                     item {
                         Box(
@@ -174,6 +175,7 @@ fun ExerciseLogsPage(
                         }
                     }
                 } else {
+                    // si no simplemente lo sitera y llaam a LogItemCard
                     groupedLogs.forEach { (monthYear, logs) ->
                         item {
                             Card(
@@ -290,6 +292,7 @@ fun ExerciseLogsPage(
                     }
                 }
             },
+            //boron cancelar registro
             dismissButton = {
                 TextButton(
                     onClick = {
@@ -392,6 +395,7 @@ private fun LogItemCard(log: ExerciseLogEntity, onDelete: (ExerciseLogEntity) ->
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    //muestar peso
                     Column {
                         Text(
                             "Peso",
@@ -403,7 +407,7 @@ private fun LogItemCard(log: ExerciseLogEntity, onDelete: (ExerciseLogEntity) ->
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                         )
                     }
-
+                    //mestra repetciones
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
                             "Repeticiones",
@@ -429,7 +433,7 @@ private fun LogItemCard(log: ExerciseLogEntity, onDelete: (ExerciseLogEntity) ->
                     )
                 }
             }
-
+        //boton para eliminars
             IconButton(onClick = { onDelete(log) }) {
                 Icon(
                     Icons.Default.Delete,

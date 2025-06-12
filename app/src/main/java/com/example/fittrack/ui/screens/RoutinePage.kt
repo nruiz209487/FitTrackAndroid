@@ -39,7 +39,7 @@ fun RoutinePage(
     var isSaving by remember { mutableStateOf(false) }
     var showSavedMessage by remember { mutableStateOf(false) }
 
-    val dao = MainActivity.database.trackFitDao()
+    val dao = MainActivity.database.trackFitDao()  // Declara la bd
 
     LaunchedEffect(Unit) {
         routine = dao.getRoutines().find { it.id == routineId }?.also { foundRoutine ->

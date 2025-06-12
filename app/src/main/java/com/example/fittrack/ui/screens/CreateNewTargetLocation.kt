@@ -173,6 +173,7 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                     .padding(end = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // btono zomm
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
@@ -190,7 +191,7 @@ fun CreateNewTargetLocation(navController: NavHostController) {
                         contentDescription = "Acercar"
                     )
                 }
-
+                //boton alejar
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
@@ -437,7 +438,7 @@ fun CreateNewTargetLocation(navController: NavHostController) {
             }
         }
     }
-
+    // mensaje de que se ha guardado bien
     if (showSuccessDialog) {
         AlertDialog(
             onDismissRequest = {
@@ -458,7 +459,7 @@ fun CreateNewTargetLocation(navController: NavHostController) {
             }
         )
     }
-
+    // mensaje de error
     if (showErrorDialog) {
         AlertDialog(
             onDismissRequest = { showErrorDialog = false },

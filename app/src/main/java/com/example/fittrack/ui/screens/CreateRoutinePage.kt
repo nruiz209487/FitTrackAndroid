@@ -41,7 +41,7 @@ fun CreateRoutinePage(navController: NavController) {
     var routineDescription by remember { mutableStateOf("") }
     var showDialog by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
-    val dao = MainActivity.database.trackFitDao()
+    val dao = MainActivity.database.trackFitDao() // bd
 
     LaunchedEffect(Unit) {
         exercises = dao.getExercises()
@@ -62,6 +62,7 @@ fun CreateRoutinePage(navController: NavController) {
                             launchSingleTop = true
                         }
                     }) {
+                        //boton volver
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver"
@@ -69,6 +70,7 @@ fun CreateRoutinePage(navController: NavController) {
                     }
                 },
                 actions = {
+                    //boton guardar
                     TextButton(
                         onClick = { showDialog = true },
                         enabled = selectedExercises.isNotEmpty() && routineName.isNotBlank()
@@ -86,6 +88,7 @@ fun CreateRoutinePage(navController: NavController) {
                 .padding(innerPadding)
                 .padding(2.dp)
         ) {
+            //campo nombre
             OutlinedTextField(
                 value = routineName,
                 onValueChange = { routineName = it },
@@ -94,7 +97,7 @@ fun CreateRoutinePage(navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
-
+            //campo descripcion rutina
             OutlinedTextField(
                 value = routineDescription,
                 onValueChange = { routineDescription = it },
@@ -176,6 +179,7 @@ fun CreateRoutinePage(navController: NavController) {
                             selectedExerciseIds = selectedExercises.toList(),
                             allExercises = exercises,
                         ) {
+                            //regresa a la pagina principal
                             navController.navigate("home") {
                                 popUpTo("create_routine") { inclusive = true }
                                 launchSingleTop = true
@@ -257,10 +261,11 @@ private fun saveRoutine(
         .firstOrNull { selectedExerciseIds.contains(it.id) }
         ?.imageUri ?: ""
 
+
     val routine = RoutineEntity(
         name = routineName,
         description = routineDescription,
-        exerciseIds = selectedExerciseIds.joinToString(","),
+        exerciseIds = selectedExerciseIds.joinToString(","), //separa los id por comas
         imageUri = firstExerciseImage
     )
 

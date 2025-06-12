@@ -36,11 +36,14 @@ import com.example.fittrack.ui.ui_elements.NavBar
 import kotlinx.coroutines.launch
 import kotlin.system.exitProcess
 
+/**
+ * Composable que sirve como el perfil de usuario
+ */
 @Composable
 fun ProfileScreen(navController: NavController) {
     var user by remember { mutableStateOf<UserEntity?>(null) }
     var showLogoutDialog by remember { mutableStateOf(false) }
-    val dao = MainActivity.database.trackFitDao()
+    val dao = MainActivity.database.trackFitDao()  // Declara la bd
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -69,9 +72,9 @@ fun ProfileScreen(navController: NavController) {
                     onClick = {
                         coroutineScope.launch {
                             try {
-                                dao.clearAllData()
+                                dao.clearAllData() // borra la db
                                 (context as? MainActivity)?.finishAffinity()
-                                exitProcess(0)
+                                exitProcess(0) // salida forzada
                             } catch (e: Exception) {
                                 (context as? MainActivity)?.finishAffinity()
                                 exitProcess(0)
@@ -124,7 +127,7 @@ fun ProfileScreen(navController: NavController) {
         }
     }
 }
-// header
+// cabecera con la imagen del usario y su nombre
 @Composable
 private fun ProfileHeaderSection(user: UserEntity?) {
     Card(
@@ -184,6 +187,7 @@ fun ProfileImage(imageUrl: String?, modifier: Modifier = Modifier) {
             shape = CircleShape,
             modifier = modifier
         ) {
+            // imagen de perfil
             if (imageUrl != "") {
                 AsyncImage(
                     model = ImageRequest.Builder(context)
@@ -197,6 +201,7 @@ fun ProfileImage(imageUrl: String?, modifier: Modifier = Modifier) {
                         .fillMaxSize()
                 )
             } else {
+                // imagen por defecto si no esta asignada en la pripiedad del suario
                 Image(
                     painter = painterResource(id = R.drawable.ic_launcher_foreground),
                     contentDescription = "Imagen de perfil por defecto",
@@ -209,7 +214,9 @@ fun ProfileImage(imageUrl: String?, modifier: Modifier = Modifier) {
         }
     }
 }
-//secion datos del suario
+/**
+ * carta de datos se ha quedado asi antes habia mas datos pero se han cambiado de lugar
+ */
 @Composable
 private fun UserMetricsSection(user: UserEntity) {
     val metrics = listOf(
@@ -227,7 +234,10 @@ private fun UserMetricsSection(user: UserEntity) {
         }
     }
 }
-//carta de datos
+
+/**
+ * carta de datos
+ */
 @Composable
 private fun MetricCard(metric: MetricData) {
     Card(
@@ -266,6 +276,9 @@ private fun MetricCard(metric: MetricData) {
     }
 }
 
+/**
+ * Composable que basicamente meustar los botones
+ */
 @Composable
 private fun ActionButtonsSection(
     navController: NavController,
@@ -278,6 +291,7 @@ private fun ActionButtonsSection(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // boton para nav user_data
         FilledTonalButton(
             onClick = { navController.navigate("user_data") },
             modifier = Modifier.fillMaxWidth(),
@@ -292,7 +306,7 @@ private fun ActionButtonsSection(
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = "Actualizar datos", fontWeight = FontWeight.Medium)
         }
-
+        // boton para nav targetLocation
         FilledTonalButton(
             onClick = { navController.navigate("targetLocation") },
             modifier = Modifier.fillMaxWidth(),
@@ -312,6 +326,7 @@ private fun ActionButtonsSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // boton para nav settings
             ActionButton(
                 onClick = { navController.navigate("settings") },
                 icon = Icons.Outlined.Settings,
@@ -319,7 +334,7 @@ private fun ActionButtonsSection(
                 modifier = Modifier.weight(1f),
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.8f)
             )
-
+            // boton para nav IMCScreen
             ActionButton(
                 onClick = { navController.navigate("IMCScreen") },
                 icon = Icons.Outlined.MonitorWeight,
@@ -328,7 +343,7 @@ private fun ActionButtonsSection(
                 containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f)
             )
         }
-
+        // boton para cerrar sesion
         OutlinedButton(
             onClick = onLogoutClick,
             modifier = Modifier.fillMaxWidth(),

@@ -91,7 +91,7 @@ fun IMCScreen(navController: NavHostController) {
             }
         )
     }
-
+    //pagina
     Scaffold(
         bottomBar = { NavBar(navController) }
     ) { padding ->
@@ -110,7 +110,7 @@ fun IMCScreen(navController: NavHostController) {
                     } else 0.0
                 }
             }
-
+            //sugerencias dependiendo del imc
             val (clasification, suggestion) = remember(imc.value, gender) {
                 when {
                     imc.value == 0.0 -> Pair("", "")
@@ -156,7 +156,7 @@ fun IMCScreen(navController: NavHostController) {
 
             Text("Selecciona tu género (opcional):", style = MaterialTheme.typography.bodyLarge)
 
-
+    //selecciona el genero
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -176,7 +176,7 @@ fun IMCScreen(navController: NavHostController) {
                     )
                 }
             }
-
+    //si no selecciona nada muestra no especificado
             if (gender.isEmpty()) {
                 Text(
                     text = "Género: No especificado",
@@ -219,14 +219,14 @@ fun IMCScreen(navController: NavHostController) {
                                 height = height.text.toDoubleOrNull(),
                                 weight = weight.text.toDoubleOrNull()
                             )
-                            dao.updateUser(updatedUser)
+                            dao.updateUser(updatedUser) //actualiza el usuario
                         }
 
                         if (imc.value > 0 && !generatedRoutines) {
                             generateRoutines = true
                             try {
                                 val userId = user?.id ?: 1
-                                RoutineGenerator.generateAndSaveRoutines(imc.value, userId)
+                                RoutineGenerator.generateAndSaveRoutines(imc.value, userId) //genera las rutinas
                                 generatedRoutines = true
                                 popUpRoutines = true
                             } catch (e: Exception) {
@@ -249,7 +249,7 @@ fun IMCScreen(navController: NavHostController) {
                 }
                 Text(if (generateRoutines) "Generando rutinas..." else "Calcular IMC")
             }
-
+            //muestra los resultados
             if (showResults && imc.value > 0) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
